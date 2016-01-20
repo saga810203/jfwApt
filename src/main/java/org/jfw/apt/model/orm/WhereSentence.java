@@ -150,7 +150,7 @@ public class WhereSentence {
 		if (this.values != null && this.values.length > 0) {
 			for (int i = 0; i < this.values.length; ++i) {
 				SqlValueEntry sve = this.values[i];
-				sve.getOrm().writeValue(sb);
+				sve.getOrm().writeValue(sb,this.dynamic);
 			}
 		}
 	}

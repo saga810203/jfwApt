@@ -1,25 +1,19 @@
 package org.jfw.apt;
 
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVariable;
-import javax.lang.model.type.WildcardType;
 
 import org.jfw.apt.exception.AptException;
 import org.jfw.apt.model.orm.Column;
@@ -35,13 +29,25 @@ public class Utils {
 	public static boolean isPrimitive(String className) {
 		return wrapClassName.containsKey(className);
 	}
-	public static OrmHandler getOrmHandler(Column col,Element ref) throws AptException{
-		try{
-		return col.getDataElement().getHandlerClass().newInstance();
+
+	public static OrmHandler getOrmHandler(Column col, Element ref) throws AptException {
+		try {
+			return col.getDataElement().getHandlerClass().newInstance();
 		} catch (Exception ee) {
 			String m = ee.getMessage();
 			throw new AptException(ref, "can't create ormHandler instance:" + m == null ? "" : m);
 		}
+	}
+
+	public static void checkArgument(boolean condition, String format, Object... args) {
+		if (!condition)
+			throw new IllegalArgumentException(String.format(format, args));
+	}
+
+	public static <T> T checkNotNull(T reference, String format, Object... args) {
+		if (reference == null)
+			throw new NullPointerException(String.format(format, args));
+		return reference;
 	}
 
 	public static boolean isPrimitive(Class<?> clazz) {
@@ -51,16 +57,20 @@ public class Utils {
 	public static String getWrapClass(String className) {
 		return wrapClassName.get(className);
 	}
-	public static void addSqlToStringBuilder(String s,StringBuilder sb){
-		for(int i = 0 ; i < s.length() ; ++i){
+
+	public static void addSqlToStringBuilder(String s, StringBuilder sb) {
+		for (int i = 0; i < s.length(); ++i) {
 			char c = s.charAt(i);
-			if(c=='\\' || c=='"') sb.append("\\");
+			if (c == '\\' || c == '"')
+				sb.append("\\");
 			sb.append(c);
 		}
 	}
-	public static String emptyToNull(String str){
-		if(str==null || str.trim().length() == 0) return null;
-				return str.trim();
+
+	public static String emptyToNull(String str) {
+		if (str == null || str.trim().length() == 0)
+			return null;
+		return str.trim();
 	}
 
 	public static String getClassName(Class<?> clazz) {
@@ -70,53 +80,56 @@ public class Utils {
 		return clazz.getName();
 	}
 
-	public static String getTypeName(Type type) {
-		if (type instanceof Class) {
-			Class<?> cl = (Class<?>) type;
-			if (cl.isArray()) {
-				return getTypeName(cl.getComponentType()) + "[]";
-			} else {
-				return cl.getName();
-			}
-		} else if (type instanceof GenericArrayType) {
-			return getTypeName(((GenericArrayType) type).getGenericComponentType()) + "[]";
-		} else if (type instanceof ParameterizedType) {
-			StringBuilder sb = new StringBuilder();
-			ParameterizedType pt = (ParameterizedType) type;
-			sb.append(getTypeName(pt.getRawType())).append("<");
-			Type[] ts = pt.getActualTypeArguments();
-			for (int i = 0; i < ts.length; ++i) {
-				if (i != 0)
-					sb.append(",");
-				sb.append(getTypeName(ts[i]));
-			}
-			sb.append(">");
-			return sb.toString();
-		} else if (type instanceof TypeVariable) {
-			StringBuilder sb = new StringBuilder();
-			java.lang.reflect.TypeVariable<?> tt = (java.lang.reflect.TypeVariable<?>) type;
-			sb.append(tt.getName()).append(" extends ");
-			Type[] ts = tt.getBounds();
-			for (int i = 0; i < ts.length; ++i) {
-				if (i != 0)
-					sb.append(" & ");
-				sb.append(getTypeName(ts[i]));
-			}
-			return sb.toString();
-		} else if (type instanceof WildcardType) {
-
-			java.lang.reflect.WildcardType wt = (java.lang.reflect.WildcardType) type;
-			if (wt.getLowerBounds().length > 0) {
-				return "? super " + getTypeName(wt.getLowerBounds()[0]);
-			} else if (Object.class != wt.getUpperBounds()[0]) {
-				return "? extends " + getTypeName(wt.getUpperBounds()[0]);
-			} else {
-				return "?";
-			}
-
-		}
-		return null;
-	}
+	// public static String getTypeName(Type type) {
+	// if (type instanceof Class) {
+	// Class<?> cl = (Class<?>) type;
+	// if (cl.isArray()) {
+	// return getTypeName(cl.getComponentType()) + "[]";
+	// } else {
+	// return cl.getName();
+	// }
+	// } else if (type instanceof GenericArrayType) {
+	// return getTypeName(((GenericArrayType) type).getGenericComponentType()) +
+	// "[]";
+	// } else if (type instanceof ParameterizedType) {
+	// StringBuilder sb = new StringBuilder();
+	// ParameterizedType pt = (ParameterizedType) type;
+	// sb.append(getTypeName(pt.getRawType())).append("<");
+	// Type[] ts = pt.getActualTypeArguments();
+	// for (int i = 0; i < ts.length; ++i) {
+	// if (i != 0)
+	// sb.append(",");
+	// sb.append(getTypeName(ts[i]));
+	// }
+	// sb.append(">");
+	// return sb.toString();
+	// } else if (type instanceof java.lang.reflect.TypeVariable) {
+	// StringBuilder sb = new StringBuilder();
+	// java.lang.reflect.TypeVariable<?> tt =
+	// (java.lang.reflect.TypeVariable<?>) type;
+	// sb.append(tt.getName()).append(" extends ");
+	// Type[] ts = tt.getBounds();
+	// for (int i = 0; i < ts.length; ++i) {
+	// if (i != 0)
+	// sb.append(" & ");
+	// sb.append(getTypeName(ts[i]));
+	// }
+	// return sb.toString();
+	// } else if (type instanceof WildcardType) {
+	//
+	// java.lang.reflect.WildcardType wt = (java.lang.reflect.WildcardType)
+	// type;
+	// if (wt.getLowerBounds().length > 0) {
+	// return "? super " + getTypeName(wt.getLowerBounds()[0]);
+	// } else if (Object.class != wt.getUpperBounds()[0]) {
+	// return "? extends " + getTypeName(wt.getUpperBounds()[0]);
+	// } else {
+	// return "?";
+	// }
+	//
+	// }
+	// return null;
+	// }
 
 	public static String classNameToInstanceName(String className) {
 		return className.substring(0, 1).toLowerCase(Locale.ENGLISH) + className.substring(1);
@@ -155,94 +168,220 @@ public class Utils {
 		return (PackageElement) type;
 	}
 
-	public static String getReturnTypeName(TypeMirror t, Element ele) throws AptException {
-		TypeKind td = t.getKind();
-		if (td == TypeKind.BOOLEAN) {
-			return "boolean";
-		} else if (td == TypeKind.BYTE) {
-			return "byte";
-		} else if (td == TypeKind.SHORT) {
-			return "short";
-		} else if (td == TypeKind.INT) {
-			return "int";
-		} else if (td == TypeKind.LONG) {
-			return "long";
-		} else if (td == TypeKind.CHAR) {
-			return "char";
-		} else if (td == TypeKind.FLOAT) {
-			return "float";
-		} else if (td == TypeKind.DOUBLE) {
-			return "double";
-		} else if (td == TypeKind.DOUBLE) {
-			return "double";
-		} else if (td == TypeKind.VOID) {
-			return "void";
-		} else if (td == TypeKind.ARRAY) {
-			return getReturnTypeName(((ArrayType) t).getComponentType(), ele) + "[]";
-		} else if (td == TypeKind.DECLARED) {
-			DeclaredType dt = (DeclaredType) t;
-			String name = ((TypeElement) dt.asElement()).getQualifiedName().toString();
+	// public static String getReturnTypeName(TypeMirror t, Element ele) throws
+	// AptException {
+	// TypeKind td = t.getKind();
+	// if (td == TypeKind.BOOLEAN) {
+	// return "boolean";
+	// } else if (td == TypeKind.BYTE) {
+	// return "byte";
+	// } else if (td == TypeKind.SHORT) {
+	// return "short";
+	// } else if (td == TypeKind.INT) {
+	// return "int";
+	// } else if (td == TypeKind.LONG) {
+	// return "long";
+	// } else if (td == TypeKind.CHAR) {
+	// return "char";
+	// } else if (td == TypeKind.FLOAT) {
+	// return "float";
+	// } else if (td == TypeKind.DOUBLE) {
+	// return "double";
+	// } else if (td == TypeKind.DOUBLE) {
+	// return "double";
+	// } else if (td == TypeKind.VOID) {
+	// return "void";
+	// } else if (td == TypeKind.ARRAY) {
+	// return getReturnTypeName(((ArrayType) t).getComponentType(), ele) + "[]";
+	// } else if (td == TypeKind.DECLARED) {
+	// DeclaredType dt = (DeclaredType) t;
+	// String name = ((TypeElement)
+	// dt.asElement()).getQualifiedName().toString();
+	//
+	// List<? extends TypeMirror> list = dt.getTypeArguments();
+	// if (list.isEmpty())
+	// return name;
+	// ArrayList<String> as = new ArrayList<String>();
+	// for (int i = 0; i < list.size(); ++i) {
+	// TypeMirror tm = list.get(i);
+	// if (tm.getKind().isPrimitive() || tm.getKind() == TypeKind.VOID) {
+	// throw new AptException(ele, "invalid ParameterizedType");
+	// }
+	// as.add(getReturnTypeName(tm, ele));
+	// }
+	// StringBuilder sb = new StringBuilder();
+	// sb.append(name).append("<");
+	// for (int i = 0; i < as.size(); ++i) {
+	// if (i != 0)
+	// sb.append(",");
+	// sb.append(as.get(i));
+	// }
+	// sb.append(">");
+	// return sb.toString();
+	// } else if (td == TypeKind.TYPEVAR) {
+	// TypeParameterElement element = (TypeParameterElement) ((TypeVariable)
+	// t).asElement();
+	//
+	// List<String> strs = new ArrayList<String>();
+	// for (TypeMirror typeMirror : element.getBounds()) {
+	// String s = getReturnTypeName(typeMirror, ele);
+	// if (s.equals("java.lang.Object"))
+	// continue;
+	// strs.add(s);
+	// }
+	// StringBuilder sb = new StringBuilder();
+	//
+	// for (int i = 0; i < strs.size(); ++i) {
+	// if (i == 0) {
+	// sb.append(element.getSimpleName().toString()).append(" extends ");
+	// } else {
+	// sb.append(" & ");
+	// }
+	// sb.append(strs.get(i));
+	// }
+	// return sb.toString();
+	// } else if (td == TypeKind.WILDCARD) {
+	// WildcardType mirror = (WildcardType) t;
+	// TypeMirror extendsBound = mirror.getExtendsBound();
+	// if (extendsBound == null) {
+	// TypeMirror superBound = mirror.getSuperBound();
+	// if (superBound == null) {
+	// return "?";
+	// } else {
+	// return "? super " + getReturnTypeName(superBound, ele);
+	// }
+	// } else {
+	// String cn = getReturnTypeName(extendsBound, ele);
+	// if ("java.lang.Object".equals(cn))
+	// return "?";
+	// return "? extends " + cn;
+	// }
+	// } else {
+	// throw new AptException(ele, "unknow exception for TypeKind");
+	// }
+	// }
 
-			List<? extends TypeMirror> list = dt.getTypeArguments();
-			if (list.isEmpty())
-				return name;
-			ArrayList<String> as = new ArrayList<String>();
-			for (int i = 0; i < list.size(); ++i) {
-				TypeMirror tm = list.get(i);
-				if (tm.getKind().isPrimitive() || tm.getKind() == TypeKind.VOID) {
-					throw new AptException(ele, "invalid ParameterizedType");
-				}
-				as.add(getReturnTypeName(tm, ele));
-			}
-			StringBuilder sb = new StringBuilder();
-			sb.append(name).append("<");
-			for (int i = 0; i < as.size(); ++i) {
-				if (i != 0)
-					sb.append(",");
-				sb.append(as.get(i));
-			}
-			sb.append(">");
-			return sb.toString();
-		} else if (td == TypeKind.TYPEVAR) {
-			TypeParameterElement element = (TypeParameterElement) ((TypeVariable) t).asElement();
-
-			List<String> strs = new ArrayList<String>();
-			for (TypeMirror typeMirror : element.getBounds()) {
-				String s = getReturnTypeName(typeMirror, ele);
-				if (s.equals("java.lang.Object"))
-					continue;
-				strs.add(s);
-			}
-			StringBuilder sb = new StringBuilder();
-
-			for (int i = 0; i < strs.size(); ++i) {
-				if (i == 0) {
-					sb.append(element.getSimpleName().toString()).append(" extends ");
-				} else {
-					sb.append(" & ");
-				}
-				sb.append(strs.get(i));
-			}
-			return sb.toString();
-		} else if (td == TypeKind.WILDCARD) {
-			WildcardType mirror = (WildcardType) t;
-			TypeMirror extendsBound = mirror.getExtendsBound();
-			if (extendsBound == null) {
-				TypeMirror superBound = mirror.getSuperBound();
-				if (superBound == null) {
-					return "?";
-				} else {
-					return "? super " + getReturnTypeName(superBound, ele);
-				}
-			} else {
-				String cn = getReturnTypeName(extendsBound, ele);
-				if ("java.lang.Object".equals(cn))
-					return "?";
-				return "? extends " + cn;
-			}
-		} else {
-			throw new AptException(ele, "unknow exception for TypeKind");
+	public static Set<Modifier> convert(int modifiers) {
+		Set<Modifier> result = new LinkedHashSet<Modifier>();
+		if (java.lang.reflect.Modifier.isAbstract(modifiers)) {
+			result.add(Modifier.ABSTRACT);
 		}
+		if (java.lang.reflect.Modifier.isFinal(modifiers)) {
+			result.add(Modifier.FINAL);
+		}
+		if (java.lang.reflect.Modifier.isNative(modifiers)) {
+			result.add(Modifier.NATIVE);
+		}
+		if (java.lang.reflect.Modifier.isPrivate(modifiers)) {
+			result.add(Modifier.PRIVATE);
+		}
+		if (java.lang.reflect.Modifier.isProtected(modifiers)) {
+			result.add(Modifier.PROTECTED);
+		}
+		if (java.lang.reflect.Modifier.isPublic(modifiers)) {
+			result.add(Modifier.PUBLIC);
+		}
+		if (java.lang.reflect.Modifier.isStatic(modifiers)) {
+			result.add(Modifier.STATIC);
+		}
+		if (java.lang.reflect.Modifier.isStrict(modifiers)) {
+			result.add(Modifier.STRICTFP);
+		}
+		if (java.lang.reflect.Modifier.isSynchronized(modifiers)) {
+			result.add(Modifier.SYNCHRONIZED);
+		}
+		if (java.lang.reflect.Modifier.isTransient(modifiers)) {
+			result.add(Modifier.TRANSIENT);
+		}
+		if (java.lang.reflect.Modifier.isVolatile(modifiers)) {
+			result.add(Modifier.VOLATILE);
+		}
+		return result;
+	}
+
+	public static Object getReturnValueOnAnnotation(String methodName, AnnotationMirror annotation) {
+		for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotation.getElementValues()
+				.entrySet()) {
+			ExecutableElement ee = entry.getKey();
+			if (ee.getSimpleName().toString().equals(methodName)) {
+				return entry.getValue().getValue();
+			}
+		}
+		for (Element ele : annotation.getAnnotationType().asElement().getEnclosedElements()) {
+			if (ele.getKind() == ElementKind.METHOD) {
+				ExecutableElement ee = (ExecutableElement) ele;
+				if (ee.getSimpleName().toString().equals(methodName) && (null != ee.getDefaultValue())) {
+					return ee.getDefaultValue().getValue();
+				}
+			}
+		}
+		return null;
+	}
+
+	public static boolean isJavacClass(Object obj, Class<?> clazz) {
+		if (obj == null)
+			return false;
+
+		if ((obj instanceof Class) && (clazz.isAssignableFrom((Class<?>) obj)))
+			return true;
+		try {
+			return clazz.isAssignableFrom(Class.forName(obj.toString()));
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> Class<T> getClass(Object obj, Class<T> clazz) {
+		if (obj == null)
+			return null;
+		if ((obj instanceof Class) && (clazz.isAssignableFrom((Class<?>) obj)))
+			return (Class<T>) obj;
+		try {
+			Class<?> cls = Class.forName(obj.toString());
+			if (clazz.isAssignableFrom(cls)) {
+				return (Class<T>) cls;
+			}
+			return null;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T getObjectWithClassNameOrClass(Object obj, Class<T> clazz) {
+		if (obj == null)
+			return null;
+		Class<?> cls = null;
+		if ((obj instanceof Class) && (clazz.isAssignableFrom((Class<?>) obj))) {
+			cls = (Class<?>) obj;
+		} else {
+			try {
+				cls = Class.forName(obj.toString());
+				if (!clazz.isAssignableFrom(cls)) {
+					cls = null;
+				}
+			} catch (Exception e) {
+				return null;
+			}
+		}
+		
+		try{
+			return (T) cls.newInstance();
+		}catch(Exception e){
+			return null;
+		}
+	}
+
+	public static String join(String separator, List<String> parts) {
+		if (parts.isEmpty())
+			return "";
+		StringBuilder result = new StringBuilder();
+		result.append(parts.get(0));
+		for (int i = 1; i < parts.size(); i++) {
+			result.append(separator).append(parts.get(i));
+		}
+		return result.toString();
 	}
 
 	static {

@@ -12,15 +12,19 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
-import org.jfw.apt.Utils;
 import org.jfw.apt.exception.AptException;
+import org.jfw.apt.model.core.TypeName;
 
 public class AbstractMethodGenerater {
 	protected Map<String,Object> attributes = new HashMap<String,Object>();
 	protected String returnType;
 	protected String name;
 	protected List<MethodParamEntry> params = new ArrayList<MethodParamEntry>();
+
+
 	protected List<String> throwables =  new ArrayList<String>() ;
+
+
 	protected ExecutableElement ref;
 	protected TypeElement enclosing;
 	protected List<String> modifiers = new ArrayList<String>() ;
@@ -34,20 +38,28 @@ public class AbstractMethodGenerater {
 		for(Modifier m:ref.getModifiers()){
 			this.modifiers.add(m.toString());
 		}				
-		this.enclosing = (TypeElement)ref.getEnclosingElement();		
-		this.returnType = Utils.getReturnTypeName(ref.getReturnType(), ref);
+		this.enclosing = (TypeElement)ref.getEnclosingElement();
+		try{
+		this.returnType =TypeName.get(ref.getReturnType()).toString();
+		}catch(Exception e){
+			throw new AptException(ref,"unSupported Method returnType");
+		}
 		this.name = ref.getSimpleName().toString();
 
 		List<? extends VariableElement> eles = ref.getParameters();
 		this.params.clear();
 		for(int i = 0 ; i < eles.size() ; ++i){
+			try{
 			this.params.add(MethodParamEntry.build(eles.get(i)));
+			}catch(Exception e){
+				throw new AptException(eles.get(i),"unSupported Method parameterType");
+			}
 		}
 		
 	    List<? extends TypeMirror> ths =	ref.getThrownTypes();
 	    this.throwables.clear();
 	    for(int i = 0 ; i < ths.size() ; ++i){
-	    	this.throwables.add(Utils.getReturnTypeName(ths.get(i), ref));
+	    	this.throwables.add(TypeName.get(ths.get(i)).toString());
 	    }
 	}
 	
@@ -57,7 +69,14 @@ public class AbstractMethodGenerater {
 	public Object getAttribute(String key){
 		return attributes.get(key);
 	}
+	public List<MethodParamEntry> getParams() {
+		return params;
+	}
 	
+	public ExecutableElement getRef() {
+		return ref;
+	}
+
 	private static final String TVN = AbstractMethodGenerater.class.getName()+"_TVN";
 	public String getTempalteVariableName(){
 		Object obj = this.attributes.get(TVN);
@@ -67,5 +86,11 @@ public class AbstractMethodGenerater {
 		return "tmp"+i;		
 	}
 	
+	public String getReturnType() {
+		return returnType;
+	}
 
+	public String getName() {
+		return name;
+	}
 }

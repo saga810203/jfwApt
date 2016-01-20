@@ -83,6 +83,7 @@ public class Column {
 			}
 			sb.append(")");
 		}
+		if(!this.nullable) sb.append(" not null");
 		return sb.toString();
 	}
 	

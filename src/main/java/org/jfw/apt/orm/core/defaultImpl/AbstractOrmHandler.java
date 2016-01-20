@@ -30,8 +30,10 @@ public abstract class AbstractOrmHandler extends BaseOrmHandler {
 					.append(afterCode == null ? "" : afterCode);
 		}
 	}
+
 	@Override
-	public void init(String valueEl, boolean userTempalteVar, boolean valueNullable, Map<String, Object> localVarInMethod) {
+	public void init(String valueEl, boolean userTempalteVar, boolean valueNullable,
+			Map<String, Object> localVarInMethod) {
 		this.valueEl = valueEl;
 		this.userTempalteVar = userTempalteVar;
 		this.valueNullable = valueNullable;
@@ -50,7 +52,8 @@ public abstract class AbstractOrmHandler extends BaseOrmHandler {
 		}
 		if (this.supportsClass().isPrimitive())
 			return;
-		if(!this.valueNullable) return;
+		if (!this.valueNullable)
+			return;
 
 		this.isNullVariable = this.getTempalteVariableName(this.localVarInMethod);
 
@@ -71,7 +74,9 @@ public abstract class AbstractOrmHandler extends BaseOrmHandler {
 	}
 
 	@Override
-	public void writeValue(StringBuilder sb) {
+	public void writeValue(StringBuilder sb, boolean dynamicValue) {
+		this.checkParamIndex(sb, localVarInMethod);
+
 		if (null == this.isNullVariable) {
 			sb.append("ps.").append(this.getWriteMethod()).append("(paramIndex++,");
 			if (null == cacheValueVariable) {
@@ -81,15 +86,26 @@ public abstract class AbstractOrmHandler extends BaseOrmHandler {
 			}
 			sb.append(");\r\n");
 		} else {
-			sb.append("if(").append(this.isNullVariable).append("){\r\n").append("ps.setNull(paramIndex++,")
-					.append(this.getSqlType()).append(");\r\n").append("}else{\r\n").append("ps.")
-					.append(this.getWriteMethod()).append("(paramIndex++,");
-			if (null == cacheValueVariable) {
-				sb.append(this.valueEl);
+			if (dynamicValue) {
+				sb.append("if(").append(this.isNullVariable).append("){\r\n").append("ps.")
+						.append(this.getWriteMethod()).append("(paramIndex++,");
+				if (null == cacheValueVariable) {
+					sb.append(this.valueEl);
+				} else {
+					sb.append(this.cacheValueVariable);
+				}
+				sb.append(");\r\n}\r\n");
 			} else {
-				sb.append(this.cacheValueVariable);
+				sb.append("if(").append(this.isNullVariable).append("){\r\n").append("ps.setNull(paramIndex++,")
+						.append(this.getSqlType()).append(");\r\n").append("}else{\r\n").append("ps.")
+						.append(this.getWriteMethod()).append("(paramIndex++,");
+				if (null == cacheValueVariable) {
+					sb.append(this.valueEl);
+				} else {
+					sb.append(this.cacheValueVariable);
+				}
+				sb.append(");\r\n}\r\n");
 			}
-			sb.append(");\r\n}\r\n");
 		}
 
 	}

@@ -1,7 +1,13 @@
 package org.jfw.apt.annotation.orm;
 
-import org.jfw.apt.orm.core.enums.DataElement;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
+import org.jfw.apt.orm.core.enums.DataElement;
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.SOURCE)
 public @interface SqlValue {
 	DataElement de();
 	String paramName() default "";

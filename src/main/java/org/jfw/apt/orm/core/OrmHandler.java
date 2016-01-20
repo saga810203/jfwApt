@@ -23,7 +23,7 @@ public interface OrmHandler {
 	 */	
 	void checkNull(StringBuilder sb);	
 	//使用 "paramIndex++" 局部变量 
-	void writeValue(StringBuilder sb);
+	void writeValue(StringBuilder sb,boolean dynamicValue);
 	boolean isReplaceResource();
 	void replaceResource(StringBuilder sb);
 	

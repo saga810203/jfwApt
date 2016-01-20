@@ -33,6 +33,7 @@ public class PersistentObject {
 
 	protected String comment;
 	protected PersistentObject parent;
+
 	protected String parentTableAlias;
 	
 	protected List<UniqueConstraint> uniques= new ArrayList<UniqueConstraint>();
@@ -380,4 +381,8 @@ public class PersistentObject {
 			throw new AptException(ele, "invalid field type");
 		}
 	}
+	public PersistentObject getParent() {
+		return parent;
+	}
+
 }

@@ -8,7 +8,6 @@ import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -52,25 +51,25 @@ public abstract class AbstractCodeGenerateHandler implements CodeGenerateHandler
 		Set<Modifier> modifiers = ref.getModifiers();
 		return modifiers.contains(Modifier.ABSTRACT);
 	}
-
-	public String getSourceFileName() {
-		String originName = this.ref.getQualifiedName().toString();
-		String typeName = null;
-		int index = originName.lastIndexOf(".");
-		String packageName = "";
-		if (index > 0) {
-			packageName = originName.substring(0, index + 1);
-			typeName = originName.substring(index + 1);
-		} else {
-			typeName = originName;
-		}
-		if (this.ref.getKind() == ElementKind.INTERFACE) {
-			return packageName + "impl." + typeName + "Impl";
-		} else {
-			return packageName + "extend." + typeName + "Extend";
-		}
-
-	}
+//
+//	public String getSourceFileName() {
+//		String originName = this.ref.getQualifiedName().toString();
+//		String typeName = null;
+//		int index = originName.lastIndexOf(".");
+//		String packageName = "";
+//		if (index > 0) {
+//			packageName = originName.substring(0, index + 1);
+//			typeName = originName.substring(index + 1);
+//		} else {
+//			typeName = originName;
+//		}
+//		if (this.ref.getKind() == ElementKind.INTERFACE) {
+//			return packageName + "impl." + typeName + "Impl";
+//		} else {
+//			return packageName + "extend." + typeName + "Extend";
+//		}
+//
+//	}
 
 	protected void writeSouceFile() throws AptException {
 		String originName = this.ref.getQualifiedName().toString();
@@ -94,7 +93,7 @@ public abstract class AbstractCodeGenerateHandler implements CodeGenerateHandler
 		}
 
 		try {
-			JavaFileObject jfo = this.filer.createSourceFile(packageName + "." + className, (Element[]) null);
+			
 			StringBuilder sb = new StringBuilder();
 			sb.append("package ").append(packageName).append(";\r\n").append("public class ").append(className);
 			if (this.ref.getKind() == ElementKind.INTERFACE) {
@@ -105,7 +104,7 @@ public abstract class AbstractCodeGenerateHandler implements CodeGenerateHandler
 			sb.append(" {");
 			this.writeContent(sb);
 			sb.append("\r\n}");
-
+			JavaFileObject jfo = this.filer.createSourceFile(packageName + "." + className, this.ref);
 			Writer w = jfo.openWriter();
 			try {
 				w.write(sb.toString());
@@ -137,7 +136,14 @@ public abstract class AbstractCodeGenerateHandler implements CodeGenerateHandler
 		if (kind == ElementKind.CLASS && (!isAbstract(ref)) && (!this.isSupportedNoAbstractClass())) {
 			throw new AptException(ref, "type can't supported Annotation " + getAnnotationClassName(am));
 		}
-
+		this.writeSouceFile();
+		
 	}
+
+	@Override
+	public CodeGenerateAllAfterEventByType getStaticAfterEvent() {
+		return null;
+	}
+	
 
 }

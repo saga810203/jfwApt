@@ -119,6 +119,62 @@ public class OrmDefine {
 			po.init(this);
 		}
 	}
+	
+	
+	public void generateTableDDL(PersistentObject table,List<PersistentObject> list,StringBuilder sb){
+		if(table==null) return;
+		if(table.getKind()!=PersistentObjectKind.TABLE) return;
+		for(PersistentObject po:list){
+			if(table.getJavaName().equals(po.getJavaName())) return;
+		}
+		String tn = table.getFromSentence();
+		generateTableDDL(table.getParent(),list,sb);
+		sb.append("CREATE TABLE ").append(tn).append(" (");
+		List<Column> allc = table.getAllColumn();
+		boolean isFirst = true;
+		for(Column col:allc){
+			if(isFirst){
+				isFirst = false;
+			}else{
+				sb.append(",");
+			}
+			sb.append(col.getColumnDefine());
+			
+		}
+		sb.append(");\r\n");
+		
+		UniqueConstraint uc = table.getPrimaryKey();
+		if(uc!=null){
+			sb.append("ALTER TABLE ").append(tn).append(" ADD PRIMARY KEY (");
+			String colns[] = uc.getColumnNames();
+			for(int i  = 0 ; i < colns.length ; ++i){
+				if(i!=0)sb.append(",");
+				sb.append(colns[i]);
+			}
+			sb.append(");\r\n");
+		}
+		for(UniqueConstraint unc:  table.getUniques()){
+			sb.append("ALTER TABLE ").append(tn).append(" ADD UNIQUE (");
+			String colns[] = unc.getColumnNames();
+			for(int i  = 0 ; i < colns.length ; ++i){
+				if(i!=0)sb.append(",");
+				sb.append(colns[i]);
+			}
+			sb.append(");\r\n");
+		}
+		list.add(table);		
+	}
+	
+	public String generateAllDDL(){
+		if(this.tables.size()==0)return "";
+		List<PersistentObject> list = new ArrayList<PersistentObject>();
+		StringBuilder sb = new StringBuilder();
+		for(PersistentObject table:this.tables){
+			this.generateTableDDL(table, list, sb);
+		}
+		return sb.toString();
+		
+	}
 
 	public void warnMessage(Messager messager) {
 		for (PersistentObject po : this.virtualTables) {

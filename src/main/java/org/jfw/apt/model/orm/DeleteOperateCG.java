@@ -8,6 +8,7 @@ import javax.lang.model.type.MirroredTypeException;
 import org.jfw.apt.Utils;
 import org.jfw.apt.annotation.orm.Delete;
 import org.jfw.apt.exception.AptException;
+import org.jfw.apt.model.core.TypeName;
 
 public class DeleteOperateCG extends DBOperateCG {
 
@@ -29,7 +30,7 @@ public class DeleteOperateCG extends DBOperateCG {
 		try {
 			targetClassName = this.delete.target().getName();
 		} catch (MirroredTypeException e) {
-			targetClassName = Utils.getReturnTypeName(e.getTypeMirror(), ref);
+			targetClassName = TypeName.get(e.getTypeMirror()).toString();
 		}
 
 		if (targetClassName.equals("java.lang.Object")) {
@@ -127,7 +128,7 @@ public class DeleteOperateCG extends DBOperateCG {
 		for (int i = 0; i < this.values.size(); ++i) {
 			Column col = this.values.get(i);
 			if (null == col.getFixValueWithUpdate()) {
-				col.getHandler().writeValue(sb);
+				col.getHandler().writeValue(sb,false);
 			}
 		}
 		

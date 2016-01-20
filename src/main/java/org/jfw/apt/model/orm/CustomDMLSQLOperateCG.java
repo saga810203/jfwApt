@@ -43,7 +43,7 @@ public class CustomDMLSQLOperateCG extends DBOperateCG {
 	@Override
 	protected void buildSqlParamter() {
 		for (int i = 0; i < this.values.size(); ++i) {
-		    this.values.get(i).getOrm().writeValue(sb);
+		    this.values.get(i).getOrm().writeValue(sb,false);
 		}
 	}
 

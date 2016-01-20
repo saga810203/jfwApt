@@ -2,8 +2,8 @@ package org.jfw.apt.model;
 
 import javax.lang.model.element.VariableElement;
 
-import org.jfw.apt.Utils;
 import org.jfw.apt.exception.AptException;
+import org.jfw.apt.model.core.TypeName;
 
 public class MethodParamEntry {
 	private String typeName;
@@ -18,7 +18,7 @@ public class MethodParamEntry {
 
 	public static MethodParamEntry build(VariableElement ref) throws AptException {
 		String n = ref.getSimpleName().toString();
-		String tn = Utils.getReturnTypeName(ref.asType(), ref);
+		String tn = TypeName.get(ref.asType()).toString();
 		return new MethodParamEntry(ref, tn, n);
 	}
 

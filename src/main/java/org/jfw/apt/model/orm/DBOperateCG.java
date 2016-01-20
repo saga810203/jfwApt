@@ -16,8 +16,8 @@ public abstract class DBOperateCG extends AbstractMethodGenerater{
 	protected void checkJdbc() throws AptException{
 		if(this.params.isEmpty()|| !this.params.get(0).getTypeName().equals("java.sql.Connection")|| !this.params.get(0).getName().equals("con"))
 			throw new AptException(ref,"this method must be has param & the first param type is java.sql.Connection name is con");
-		if(this.throwables.isEmpty() || !this.throwables.contains("java.sql.Exception")){
-			throw new AptException(ref,"this method must be throws java.sql.Exception");
+		if(this.throwables.isEmpty() || !this.throwables.contains("java.sql.SQLException")){
+			throw new AptException(ref,"this method must be throws java.sql.SQLException");
 		}
 		if(this.returnType.equals("void"))throw new AptException(ref,"ref must be have return type");
 	}
@@ -34,7 +34,7 @@ public abstract class DBOperateCG extends AbstractMethodGenerater{
 		this.fillMeta(ref);
 		this.sb = new StringBuilder();
 		this.checkJdbc();
-		this.sb.append("@Override\r\n")	.append(this.returnType).append(" ").append(this.name).append("(");
+		this.sb.append("@Override\r\n public ")	.append(this.returnType).append(" ").append(this.name).append("(");
 		for(int i = 0 ; i < this.params.size(); ++i){
 			if(i!=0) sb.append(",");
 			MethodParamEntry mpe = this.params.get(i);
