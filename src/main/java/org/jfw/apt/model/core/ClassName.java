@@ -96,6 +96,7 @@ public final class ClassName extends TypeName {
 						continue;
 					if (name.length() < 4)
 						continue;
+					if(!name.startsWith("set")) continue;
 					name = name.substring(3);
 					if (name.length() == 1) {
 						name = name.toLowerCase(Locale.US);
@@ -136,6 +137,7 @@ public final class ClassName extends TypeName {
 					String name = ee.getSimpleName().toString();
 					if (name.length() < 4)
 						continue;
+					if(!name.startsWith("set")) continue;
 					name = name.substring(3);
 					if (name.length() == 1) {
 						name = name.toLowerCase(Locale.US);

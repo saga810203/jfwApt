@@ -1,14 +1,14 @@
 package org.jfw.apt.model.web.handlers.viewHandler;
 
-import org.jfw.apt.annotation.web.JSON;
 import org.jfw.apt.exception.AptException;
 import org.jfw.apt.model.web.handlers.ViewHandler;
 
 public class JsonHandler  extends ViewHandler.ViewHandlerImpl {
 	@Override
 	public void init(StringBuilder sb) throws AptException {
-		JSON json = this.viewHandler.getRmcg().getRef().getAnnotation(JSON.class);
-		if(null==json) throw new AptException(this.viewHandler.getRmcg().getRef(),"invalid @JSON:nofunod @JSON");
+		//default json view
+//		JSON json = this.viewHandler.getRmcg().getRef().getAnnotation(JSON.class);
+//		if(null==json) throw new AptException(this.viewHandler.getRmcg().getRef(),"invalid @JSON:nofunod @JSON");
 		this.viewHandler.getRmcg().readOut(sb);
 	}
 	@Override

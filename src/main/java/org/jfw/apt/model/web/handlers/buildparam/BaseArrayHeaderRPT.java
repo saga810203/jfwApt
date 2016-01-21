@@ -2,35 +2,37 @@ package org.jfw.apt.model.web.handlers.buildparam;
 
 import java.util.Locale;
 
-public class BaseArrayHeaderRPT  extends AbstractRequestHeaderTransfer {
+import org.jfw.apt.Utils;
 
-	public void transferToParams() {
-		String cn = this.mpe.getTypeName();
+public class BaseArrayHeaderRPT extends AbstractRequestHeaderTransfer {
+
+	public void transferToParams(String classType) {
+		String cn = classType;
 
 		if (cn.equals("int[]")) {
 			this.sb.append("Integer.parseInt(params[i])");
 		} else if (cn.equals("java.lang.Integer[]")) {
-			this.sb.append("Integer.valueof(params[i])");
+			this.sb.append("Integer.valueOf(params[i])");
 		} else if (cn.equals("byte[]")) {
 			this.sb.append("Byte.parseByte(params[i])");
 		} else if (cn.equals("java.lang.Byte[]")) {
-			this.sb.append("Byte.valueof(params[i])");
+			this.sb.append("Byte.valueOf(params[i])");
 		} else if (cn.equals("short[]")) {
 			this.sb.append("Short.parseShort(params[i])");
 		} else if (cn.equals("java.lang.Short[]")) {
-			this.sb.append("Short.valueof(params[i])");
+			this.sb.append("Short.valueOf(params[i])");
 		} else if (cn.equals("long[]")) {
 			this.sb.append("Long.parseLong(params[i])");
 		} else if (cn.equals("java.lang.Long[]")) {
-			this.sb.append("Long.valueof(params[i])");
+			this.sb.append("Long.valueOf(params[i])");
 		} else if (cn.equals("double[]")) {
 			this.sb.append("Double.parseDouble(params[i])");
 		} else if (cn.equals("java.lang.Double[]")) {
-			this.sb.append("Double.valueof(params[i])");
+			this.sb.append("Double.valueOf(params[i])");
 		} else if (cn.equals("float[]")) {
 			this.sb.append("Float.parseFloat(params[i])");
 		} else if (cn.equals("java.lang.Float[]")) {
-			this.sb.append("Float.valueof(params[i])");
+			this.sb.append("Float.valueOf(params[i])");
 		} else if (cn.equals("boolean[]") || cn.equals("java.lang.Boolean[]")) {
 			this.sb.append(
 					"\"1\".equals(params[i])|| \"true\".equalsIgnoreCase(params[i])||\"yes\".equalsIgnoreCase(params[i])");
@@ -48,14 +50,20 @@ public class BaseArrayHeaderRPT  extends AbstractRequestHeaderTransfer {
 	@Override
 	public void bulidParam() {
 		String vTypeName = this.mpe.getTypeName();
-		this.rmcg.readHeaders(sb, this.annotation.value().trim());
+
+		String paramName = Utils.emptyToNull(this.annotation.value());
+		if (paramName == null)
+			paramName = this.mpe.getName().trim();
+
+		this.rmcg.readHeader(this.sb, paramName);
+
 		if (this.annotation.required()) {
 			sb.append("if(null==params || params.length==0){");
-			this.raiseNoFoundError(this.annotation.value().trim());
+			this.raiseNoFoundError(paramName);
 			sb.append("}\r\n").append(vTypeName).append(" ").append(this.mpe.getName()).append(" = new ")
 					.append(vTypeName.substring(1, vTypeName.length() - 1)).append("params.length];\r\n");
 			sb.append("for( int i = 0 ; i < params.length ; ++i){\r\n").append(this.mpe.getName()).append("[i]=");
-			this.transferToParams();
+			this.transferToParams(this.mpe.getTypeName());
 			sb.append(";\r\n}\r\n");
 		} else {
 			sb.append(vTypeName).append(" ").append(this.mpe.getName()).append(";\r\n");
@@ -64,7 +72,7 @@ public class BaseArrayHeaderRPT  extends AbstractRequestHeaderTransfer {
 			sb.append(this.mpe.getName()).append(" = new ").append(vTypeName.substring(0, vTypeName.length() - 1))
 					.append("params.length];");
 			sb.append("for( int i = 0 ; i < params.length ; ++i){\r\n").append(this.mpe.getName()).append("[i]=");
-			this.transferToParams();
+			this.transferToParams(this.mpe.getTypeName());
 			sb.append(";\r\n}\r\n");
 			sb.append("}else{\r\n");
 
@@ -90,7 +98,7 @@ public class BaseArrayHeaderRPT  extends AbstractRequestHeaderTransfer {
 			sb.append(vTypeName).append(" ").append(localName).append(" = new ")
 					.append(vTypeName.substring(1, vTypeName.length() - 1)).append("params.length];\r\n");
 			sb.append("for( int i = 0 ; i < params.length ; ++i){\r\n").append(localName).append("[i]=");
-			this.transferToParams();
+			this.transferToParams(this.frp.getValueClassName());
 			sb.append(";\r\n}\r\n");
 			sb.append(this.mpe.getName()).append(".set");
 			String fed = this.frp.getValue().trim();
@@ -103,9 +111,9 @@ public class BaseArrayHeaderRPT  extends AbstractRequestHeaderTransfer {
 		} else {
 			sb.append("if(null!=params && params.length!=0){\r\n");
 			sb.append(vTypeName).append(" ").append(localName).append(" = new ")
-			.append(vTypeName.substring(1, vTypeName.length() - 1)).append("params.length];\r\n");
+					.append(vTypeName.substring(1, vTypeName.length() - 1)).append("params.length];\r\n");
 			sb.append("for( int i = 0 ; i < params.length ; ++i){\r\n").append(localName).append("[i]=");
-			this.transferToParams();
+			this.transferToParams(this.frp.getValueClassName());
 			sb.append(";\r\n}\r\n");
 			sb.append(this.mpe.getName()).append(".set");
 			String fed = this.frp.getValue().trim();
@@ -117,7 +125,7 @@ public class BaseArrayHeaderRPT  extends AbstractRequestHeaderTransfer {
 			sb.append(");\r\n");
 			sb.append("\r\n}\r\n");
 			String dv = this.frp.getDefaultValue();
-			if (dv!=null&& dv.trim().length() != 0) {
+			if (dv != null && dv.trim().length() != 0) {
 				sb.append("else{");
 				sb.append(this.mpe.getName()).append(".set");
 				fed = this.frp.getValue().trim();

@@ -261,7 +261,9 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 			this.handle(annotations, roundEnv);
 		} catch (AptException e) {
 			this.messager.printMessage(Kind.ERROR, e.getMessage(), e.getEle());
+			e.printStackTrace();
 		} catch (Exception e) {
+			e.printStackTrace();
 			String m = e.getMessage();
 			if (m == null)
 				m = "nullException";

@@ -27,8 +27,9 @@ public class RequestParamHandler extends BuildParamHandler.BuildParameter {
 		Class<RequestParamTransfer> cls = null;
 		try {
 			cls = TransferFactory.getRequestParamTransfer(mpe.getTypeName());
-			if (cls != null)
+			if (cls != null){
 				rpt = cls.newInstance();
+			}
 		} catch (Exception e) {
 			throw new AptException(mpe.getRef(),"create object instance error [" + cls.toString() + "]");
 		}
@@ -57,7 +58,10 @@ public class RequestParamHandler extends BuildParamHandler.BuildParameter {
 					tn =TypeName.get(mpe.getRef().asType());
 				}				
 			}catch(MirroredTypeException e){
-				tn = TypeName.get(e.getTypeMirror());				
+				tn = TypeName.get(e.getTypeMirror());
+				if(tn.equals(TypeName.OBJECT)){
+					tn =TypeName.get(mpe.getRef().asType());
+				}				
 			}
 			if(!tn.getClass().equals(ClassName.class)){
 				throw new AptException(this.mpe.getRef(),"can't create instance or invalid Class:"+tn.toString());
@@ -80,6 +84,7 @@ public class RequestParamHandler extends BuildParamHandler.BuildParameter {
 					rfp.setParamName(Utils.emptyToNull(fp.paramName()));
 					if(rfp.getParamName()==null) rfp.setParamName(rfp.getValue());
 					rfp.setRequired(fp.required());
+					rfp.setValueClassName(fp.valueClassName());
 					List<TypeName> plist = this.properties.get(rfp.getValue());
 					if(plist==null) throw new AptException(this.mpe.getRef(),"@FieldParam'value not in Bean property");
 					if(plist.size()>1){
@@ -118,12 +123,15 @@ public class RequestParamHandler extends BuildParamHandler.BuildParameter {
 					//TypeName validType = null;
 					List<TypeName> li = en.getValue();
 					Class<RequestParamTransfer> clRpt=null;
+					String valueClassName = null;
 					if(li.size()==1){
 						clRpt = TransferFactory.getRequestParamTransfer(li.get(0).toString());
+						valueClassName = li.get(0).toString();
 					}else{
 						for(TypeName ttn:li){
 							if(clRpt==null){
 								clRpt =TransferFactory.getRequestParamTransfer(ttn.toString());
+								valueClassName = ttn.toString();
 								//if(clRpt !=null) validType = ttn;
 							}else{
 								if(null!=TransferFactory.getRequestParamTransfer(ttn.toString())){
@@ -143,6 +151,7 @@ public class RequestParamHandler extends BuildParamHandler.BuildParameter {
 					rfp.setDefaultValue("");
 					rfp.setRequired(false);
 					rfp.setTransferClass(clRpt);	
+					rfp.setValueClassName(valueClassName);
 					list.add(rfp);
 				}
 				

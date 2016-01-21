@@ -42,7 +42,7 @@ public class RequestMappingCodeGenerator extends AbstractMethodGenerater {
 			readedStringArray = true;
 			sb.append("String[] ");
 		}
-		sb.append(" params = req.getParameters(\"").append(paramName).append("\");");
+		sb.append(" params = req.getParameterValues(\"").append(paramName).append("\");");
 	}
 
 	public void readHeaders(StringBuilder sb, String paramName) {
@@ -59,7 +59,7 @@ public class RequestMappingCodeGenerator extends AbstractMethodGenerater {
 			readedStringArray = true;
 			sb.append("String[] ");
 		}
-		sb.append("params =headers.toArray(new String[headers.size()];");
+		sb.append("params =headers.toArray(new String[headers.size()]);\r\n");
 	}
 
 	public void readParameter(StringBuilder sb, String paramName) {

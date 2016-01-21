@@ -38,6 +38,7 @@ public abstract class AbstractRequestParamTransfer implements RequestParamTransf
 		this.mpe = mpe;
 		this.annotation = annotation;
 		this.frp = null;
+		this.rmcg = rmcg;
 		this.bulidParam();
 	}
 
@@ -46,6 +47,7 @@ public abstract class AbstractRequestParamTransfer implements RequestParamTransf
 			RequestParamTransfer.FieldRequestParam frp) {
 		this.sb = sb;
 		this.mpe = mpe;
+		this.rmcg = rmcg;
 		this.frp = frp;
 		this.bulidBeanProterty();
 	}

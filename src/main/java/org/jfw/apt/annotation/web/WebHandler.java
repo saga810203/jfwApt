@@ -11,6 +11,7 @@ import org.jfw.apt.model.web.handlers.BuildParamHandler;
 import org.jfw.apt.model.web.handlers.ExecuteHandler;
 import org.jfw.apt.model.web.handlers.LastScriptHandler;
 import org.jfw.apt.model.web.handlers.SetSessionHandler;
+import org.jfw.apt.model.web.handlers.ViewHandler;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
@@ -19,7 +20,7 @@ public @interface WebHandler {
 
 	boolean threadSafe() default true;
 
-	Class<? extends RequestHandler>[] handler() default { BuildParamHandler.class, ExecuteHandler.class,
+	Class<? extends RequestHandler>[] handler() default {ViewHandler.class, BuildParamHandler.class, ExecuteHandler.class,
 			SetSessionHandler.class, LastScriptHandler.class };
 
 	String value() default "";

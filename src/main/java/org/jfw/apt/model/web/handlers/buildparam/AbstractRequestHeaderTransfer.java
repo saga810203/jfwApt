@@ -28,7 +28,7 @@ public abstract class AbstractRequestHeaderTransfer implements RequestHeaderTran
 	}
 
 	public void raiseNoFoundError(String paramName) {
-		this.sb.append("throw new IllegalArgumentException(\"not found parameter:" + paramName + "\");");
+		this.sb.append("throw new IllegalArgumentException(\"not found header:" + paramName + "\");");
 	}
 
 	@Override
@@ -38,6 +38,7 @@ public abstract class AbstractRequestHeaderTransfer implements RequestHeaderTran
 		this.mpe = mpe;
 		this.annotation = annotation;
 		this.frp = null;
+		this.rmcg = rmcg;
 		this.bulidParam();
 	}
 
@@ -47,6 +48,7 @@ public abstract class AbstractRequestHeaderTransfer implements RequestHeaderTran
 		this.sb = sb;
 		this.mpe = mpe;
 		this.frp = frp;
+		this.rmcg = rmcg;
 		this.bulidBeanProterty();
 	}
 

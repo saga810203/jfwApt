@@ -34,12 +34,12 @@ public final class ArrayTypeName extends TypeName {
     return new ArrayTypeName(componentType);
   }
 
-  public static ArrayTypeName of(Type componentType) {
-    return of(TypeName.get(componentType));
-  }
+//  public static ArrayTypeName of(Type componentType) {
+//    return of(TypeName.get(componentType));
+//  }
 
   public static ArrayTypeName get(ArrayType mirror) {
-    return get(mirror);
+    return new ArrayTypeName(TypeName.get(mirror.getComponentType()));
   }
 
 

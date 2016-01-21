@@ -14,11 +14,14 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.MirroredTypesException;
+import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
 
 import org.jfw.apt.annotation.web.RequestMapping;
 import org.jfw.apt.annotation.web.WebHandler;
 import org.jfw.apt.exception.AptException;
+import org.jfw.apt.model.core.TypeName;
 import org.jfw.apt.model.web.RequestHandler;
 import org.jfw.apt.model.web.RequestMappingCodeGenerator;
 import org.jfw.apt.model.web.RequestMethod;
@@ -40,14 +43,37 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 	protected StringBuilder sb;
 	private boolean threadSafe;
 	
-	
+	@SuppressWarnings("unchecked")
+	private List<Class<? extends RequestHandler>> getHandlerClass() throws AptException{
+		
+		List<Class<? extends RequestHandler>> result = new ArrayList<Class<? extends RequestHandler>>();
+		Class<? extends RequestHandler>[] clss =null;
+		try{
+			clss= wh.handler();
+			for(int i = 0 ; i < clss.length ; ++i){
+				result.add(clss[i]);
+			}
+		}catch(MirroredTypesException e){
+			List<? extends TypeMirror> list =e.getTypeMirrors();
+			for(int i = 0 ; i < list.size() ; ++i){
+				TypeName tn = TypeName.get(list.get(i));
+				try {
+					result.add((Class<? extends RequestHandler>) Class.forName(tn.toString()));			
+				} catch (Exception e1) {
+					throw new AptException(ref, "unknow Exception:"+e1.getMessage());
+				}
+			}
+		}
+		return result;
+		
+	}
 
 	public RequestHandler[] createHandler() throws AptException {
-		Class<? extends RequestHandler>[] clss = wh.handler();
-		RequestHandler[]  handlers  = new RequestHandler[clss.length];
-		for (int i = 0; i < clss.length; ++i) {
+		List<Class<? extends RequestHandler>> list = this.getHandlerClass();
+		RequestHandler[]  handlers  = new RequestHandler[list.size()];
+		for (int i = 0; i < list.size(); ++i) {
 			try {
-				handlers[i] = clss[i].newInstance();
+				handlers[i] = list.get(i).newInstance();
 			} catch (Exception ee) {
 				String m = ee.getMessage();
 				throw new AptException(ref, "can't create RequestHandler instance:" + m == null ? "" : m);
@@ -116,14 +142,14 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 
 			this.sb = new StringBuilder();
 			if (this.packageName.length() > 0) {
-				sb.append("package ").append(packageName).append(";\r\n");
+				sb.append("package ").append(this.getTargetClassPackage()).append(";\r\n");
 			}
-			sb.append("public class ").append(className + "WebHandler").append(" {");
+			sb.append("public class ").append(this.getTargetClassName()).append(" {");
 			sb.append("private static String handlerClassName = null;");
 			if (!this.threadSafe) {
 				sb.append("private static Class<?> handlerClass = null;\r\n");
 			} else {
-				sb.append("private ").append(this.packageName).append(this.className).append(" handler = null;\r\n");
+				sb.append("private static ").append(this.packageName).append(this.className).append(" handler = null;\r\n");
 			}
 			sb.append("public static void build(){");
 			if (this.threadSafe) {
@@ -178,8 +204,8 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 		
 		
 		this.threadSafe = wh.threadSafe();
-		Class<? extends RequestHandler>[] clss = wh.handler();
-		if (clss == null || clss.length == 0)
+		List<Class<? extends RequestHandler>> list = this.getHandlerClass();
+		if (list.isEmpty())
 			throw new AptException(ref, "@WebHandler'handler not null or empty array");
 		String cn = ref.getQualifiedName().toString();
 		int index = cn.lastIndexOf(".");
