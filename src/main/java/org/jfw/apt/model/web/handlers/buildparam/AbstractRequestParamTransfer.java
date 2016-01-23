@@ -1,25 +1,25 @@
 package org.jfw.apt.model.web.handlers.buildparam;
 
-import org.jfw.apt.annotation.web.RequestParam;
 import org.jfw.apt.model.MethodParamEntry;
 import org.jfw.apt.model.web.RequestMappingCodeGenerator;
+import org.jfw.apt.model.web.RequestParamModel;
 
 public abstract class AbstractRequestParamTransfer implements RequestParamTransfer {
 	protected StringBuilder sb;
 	protected MethodParamEntry mpe;
 	protected RequestMappingCodeGenerator rmcg;
-	protected RequestParam annotation;
+	protected RequestParamModel annotation;
 	protected RequestParamTransfer.FieldRequestParam frp;
 
 	public abstract void bulidParam();
 
 	public abstract void bulidBeanProterty();
 
-	public void checkRequestParamName() {
-		if (annotation.value() == null || annotation.value().trim().length() == 0) {
-			throw new RuntimeException("@RequestParam not set value");
-		}
-	}
+//	public void checkRequestParamName() {
+//		if (annotation.value() == null || annotation.value().trim().length() == 0) {
+//			throw new RuntimeException("@RequestParam not set value");
+//		}
+//	}
 
 	public void checkRequestFieldParamName() {
 		if (this.frp.getValue() == null || this.frp.getValue().trim().length() == 0) {
@@ -33,7 +33,7 @@ public abstract class AbstractRequestParamTransfer implements RequestParamTransf
 
 	@Override
 	public void transfer(StringBuilder sb, MethodParamEntry mpe, RequestMappingCodeGenerator rmcg,
-			RequestParam annotation) {
+			RequestParamModel annotation) {
 		this.sb = sb;
 		this.mpe = mpe;
 		this.annotation = annotation;

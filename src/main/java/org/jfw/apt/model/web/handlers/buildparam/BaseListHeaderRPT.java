@@ -1,7 +1,5 @@
 package org.jfw.apt.model.web.handlers.buildparam;
 
-import java.util.Locale;
-
 import org.jfw.apt.Utils;
 
 public class BaseListHeaderRPT extends AbstractRequestHeaderTransfer {
@@ -36,15 +34,13 @@ public class BaseListHeaderRPT extends AbstractRequestHeaderTransfer {
 
 	@Override
 	public void bulidParam() {
-		String paramName = Utils.emptyToNull(this.annotation.value());
-		if (paramName == null)
-			paramName = this.mpe.getName().trim();
+		String paramName =this.annotation.getParamNameInRequest();
 		this.rmcg.readHeader(this.sb, paramName);
 		String vn = this.mpe.getName();
 		String tn = this.mpe.getTypeName();
 		String en = tn.substring("java.util.List<".length(), tn.length() - 1);
-		String dv = this.annotation.defaultValue();
-		if (this.annotation.required()) {
+		String dv = this.annotation.getDefaultValue();
+		if (this.annotation.isRequired()) {
 			sb.append("if(null==params || params.length==0){");
 			this.raiseNoFoundError(paramName);
 			sb.append("}\r\n");
@@ -63,7 +59,7 @@ public class BaseListHeaderRPT extends AbstractRequestHeaderTransfer {
 			sb.append(");\r\n}\r\n");
 			sb.append("}else{\r\n");
 			sb.append(vn).append(" = ")
-					.append(dv == null || dv.trim().length() == 0 ? "null" : this.annotation.defaultValue());
+					.append(dv == null || dv.trim().length() == 0 ? "null" :dv);
 			sb.append(";\r\n}\r\n");
 		}
 	}
@@ -87,33 +83,21 @@ public class BaseListHeaderRPT extends AbstractRequestHeaderTransfer {
 			sb.append("for( int i = 0 ; i < params.length ; ++i){\r\n").append(localName).append(".add(");
 			this.transferToParams(this.frp.getValueClassName());
 			sb.append(");\r\n}\r\n");
-			sb.append(this.mpe.getName()).append(".set");
-			String fed = this.frp.getValue().trim();
-			sb.append(fed.substring(0, 1).toUpperCase(Locale.US));
-			if (fed.length() > 1)
-				sb.append(fed.substring(1));
-			sb.append("(");
-			sb.append(localName);
-			sb.append(");\r\n");
+			Utils.writeSetter(sb,this.mpe.getName(), this.frp.getValue(), localName);
 		} else {
-			sb.append(tn).append(" ").append(localName).append(";");
 			sb.append("if(null!=params && params.length!=0){");
-			sb.append(localName).append(" = new java.util.ArrayList<").append(en).append(">();");
+			sb.append(tn).append(" ").append(localName).append(" = new java.util.ArrayList<").append(en).append(">();");
 			sb.append("for( int i = 0 ; i < params.length ; ++i){\r\n").append(localName).append("add(");
 			this.transferToParams(this.frp.getValueClassName());
 			sb.append(");\r\n}\r\n");
-			sb.append("}else{\r\n");
-			sb.append(localName).append(" = ")
-					.append(dv == null || dv.trim().length() == 0 ? "null" : this.annotation.defaultValue());
-			sb.append(";\r\n}\r\n");
-			sb.append(this.mpe.getName()).append(".set");
-			String fed = this.frp.getValue().trim();
-			sb.append(fed.substring(0, 1).toUpperCase(Locale.US));
-			if (fed.length() > 1)
-				sb.append(fed.substring(1));
-			sb.append("(");
-			sb.append(localName);
-			sb.append(");\r\n");
+			Utils.writeSetter(sb, this.mpe.getName(), this.frp.getValue(), localName);
+			sb.append("}");
+			if(dv!=null&&dv.trim().length()>0){
+				sb.append("else{\r\n");
+				Utils.writeSetterBeforePart(sb,this.mpe.getName(), this.frp.getValue());
+				sb.append("}");
+			}
+			sb.append("\r\n");
 		}
 	}
 }

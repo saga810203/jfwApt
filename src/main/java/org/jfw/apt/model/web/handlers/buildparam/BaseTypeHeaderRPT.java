@@ -1,6 +1,5 @@
 package org.jfw.apt.model.web.handlers.buildparam;
 
-import java.util.Locale;
 
 import org.jfw.apt.Utils;
 
@@ -48,11 +47,10 @@ public class BaseTypeHeaderRPT extends AbstractRequestHeaderTransfer {
 
 	@Override
 	public void bulidParam() {
-		String paramName = Utils.emptyToNull(this.annotation.value());
-		if (paramName == null)
-			paramName = this.mpe.getName().trim();
+		String paramName = this.annotation.getParamNameInRequest();
+
 		this.rmcg.readHeader(this.sb, paramName);
-		if (this.annotation.required()) {
+		if (this.annotation.isRequired()) {
 			sb.append("if(null==param || param.length()==0){");
 			this.raiseNoFoundError(paramName);
 			sb.append("}\r\n");
@@ -61,14 +59,14 @@ public class BaseTypeHeaderRPT extends AbstractRequestHeaderTransfer {
 			sb.append(";\r\n");
 		} else {
 			sb.append(this.mpe.getTypeName()).append(" ").append(this.mpe.getName());
-			String dv = this.annotation.defaultValue();
+			String dv = this.annotation.getDefaultValue();
 			if (Utils.isPrimitive(this.mpe.getTypeName())) {
 				if (dv != null && dv.trim().length() != 0 && !"null".equals(dv.trim())) {
-					sb.append(" = ").append(this.annotation.defaultValue());
+					sb.append(" = ").append(dv);
 				}
 			} else {
 				sb.append(" = ")
-						.append((dv == null || dv.trim().length() == 0) ? "null" : this.annotation.defaultValue());
+						.append((dv == null || dv.trim().length() == 0) ? "null" : dv);
 			}
 			sb.append(";\r\n");
 			sb.append("if(null!=param && param.length()!=0){\r\n");
@@ -87,50 +85,21 @@ public class BaseTypeHeaderRPT extends AbstractRequestHeaderTransfer {
 			sb.append("if(null==param || param.length()==0){");
 			this.raiseNoFoundError(this.frp.getParamName().trim());
 			sb.append("}\r\n");
-			sb.append(this.mpe.getName()).append(".set");
-			String fed = this.frp.getValue().trim();
-			sb.append(fed.substring(0, 1).toUpperCase(Locale.US));
-			if (fed.length() > 1)
-				sb.append(fed.substring(1));
-			sb.append("(");
+			Utils.writeSetterBeforePart(sb,this.mpe.getName(), this.frp.getValue());
 			this.transferToParam(this.frp.getValueClassName());
 			sb.append(");\r\n");
 		} else {
 			sb.append("if(null!=param && param.length()!=0){\r\n");
-			sb.append(this.mpe.getName()).append(".set");
-			String fed = this.frp.getValue().trim();
-			sb.append(fed.substring(0, 1).toUpperCase(Locale.US));
-			if (fed.length() > 1)
-				sb.append(fed.substring(1));
-			sb.append("(");
+			Utils.writeSetterBeforePart(sb,this.mpe.getName(), this.frp.getValue());
 			this.transferToParam(this.frp.getValueClassName());
 			sb.append(");\r\n");
-			sb.append("}\r\n");
-			String cn = this.frp.getValueClassName();
+			sb.append("}");
 			String dv = this.frp.getDefaultValue();
-			if (Utils.isPrimitive(cn)) {
-				if (dv != null && dv.trim().length() != 0 && !"null".equals(dv.trim())) {
-					sb.append("else\r\n{ \r\n");
-					sb.append(this.mpe.getName()).append(".set");
-					fed = this.frp.getValue().trim();
-					sb.append(fed.substring(0, 1).toUpperCase(Locale.US));
-					if (fed.length() > 1)
-						sb.append(fed.substring(1));
-					sb.append("(");
-					sb.append(dv).append(");\r\n}\r\n");
-				}
-			} else {
-				if (dv != null && dv.trim().length() != 0) {
-					sb.append("else\r\n{ \r\n");
-					sb.append(this.mpe.getName()).append(".set");
-					fed = this.frp.getValue().trim();
-					sb.append(fed.substring(0, 1).toUpperCase(Locale.US));
-					if (fed.length() > 1)
-						sb.append(fed.substring(1));
-					sb.append("(");
-					sb.append(dv).append(");\r\n}\r\n");
-				}
+			if(dv!=null&&dv.trim().length()>0){
+				sb.append("else{\r\n");
+				Utils.writeSetter(sb, this.mpe.getName(), this.frp.getValue(), dv);
 			}
+			sb.append("\r\n");
 		}
 	}
 

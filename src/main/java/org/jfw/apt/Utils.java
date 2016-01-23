@@ -26,6 +26,22 @@ public class Utils {
 	private Utils() {
 	}
 
+	public static void writeSetterBeforePart(StringBuilder sb, String objName, String attrName)
+	{
+		sb.append(objName.trim()).append(".set");
+		String fed = attrName.trim();
+		sb.append(fed.substring(0, 1).toUpperCase(Locale.US));
+		if (fed.length() > 1)
+			sb.append(fed.substring(1));
+		sb.append("(");
+	}
+	
+	public static void writeSetter(StringBuilder sb, String objName, String attrName, String valName) {
+		writeSetterBeforePart(sb, objName, attrName);
+		sb.append(valName.trim());
+		sb.append(");\r\n");
+	}
+
 	public static boolean isPrimitive(String className) {
 		return wrapClassName.containsKey(className);
 	}
@@ -365,10 +381,10 @@ public class Utils {
 				return null;
 			}
 		}
-		
-		try{
+
+		try {
 			return (T) cls.newInstance();
-		}catch(Exception e){
+		} catch (Exception e) {
 			return null;
 		}
 	}

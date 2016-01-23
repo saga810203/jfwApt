@@ -13,7 +13,7 @@ import org.jfw.apt.model.web.handlers.buildparam.RequestParamHandler;
 public @interface RequestParam {
 	String value() default "";
 	Class<?> clazz() default Object.class;
-	String defaultValue() default "null";
+	String defaultValue() default "";
 	boolean required() default true;
 	FieldParam[] fields() default {};
 	String[] excludeFields() default {};

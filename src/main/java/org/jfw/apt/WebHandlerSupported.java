@@ -39,6 +39,7 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 	protected String className;
 	protected String uri="";
 	protected WebHandler wh;
+	protected int methodSeq = 0;
 
 	protected StringBuilder sb;
 	private boolean threadSafe;
@@ -128,7 +129,7 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 				re.setMethod(rmcg.getWebMethodName());
 				re.setUri(vuri);
 				re.setRequestMethods(rm.method());
-				re.setClassName(this.packageName+this.className);
+				re.setClassName(this.getTargetClassPackage()+"."+this.getTargetClassName());
 				reqs.add(re);
 			}
 		}
@@ -200,8 +201,7 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 				throw new AptException(ref,"@WebHandler'value must be startsWith '/'");
 			}
 		}
-		
-		
+		this.uri = vuri;		
 		
 		this.threadSafe = wh.threadSafe();
 		List<Class<? extends RequestHandler>> list = this.getHandlerClass();
@@ -217,6 +217,11 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 		}
 		this.writeFile();
 	}
+	
+	public String getServiceMethodName(){
+		return "ws_"+(++this.methodSeq);
+	}
+	
 	public boolean isThreadSafe() {
 		return threadSafe;
 	}

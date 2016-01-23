@@ -2,13 +2,13 @@ package org.jfw.apt.model.web.handlers.buildparam;
 
 
 
-import org.jfw.apt.annotation.web.RequestHeader;
 import org.jfw.apt.exception.AptException;
 import org.jfw.apt.model.MethodParamEntry;
+import org.jfw.apt.model.web.RequestHeaderModel;
 import org.jfw.apt.model.web.RequestMappingCodeGenerator;
 
 public interface RequestHeaderTransfer {
-void transfer(StringBuilder sb,MethodParamEntry mpe,RequestMappingCodeGenerator rmcg,RequestHeader annotation) throws AptException;
+void transfer(StringBuilder sb,MethodParamEntry mpe,RequestMappingCodeGenerator rmcg,RequestHeaderModel annotation) throws AptException;
     void transferBeanProperty(StringBuilder sb,MethodParamEntry mpe,RequestMappingCodeGenerator rmcg,RequestHeaderTransfer.FieldRequestParam frp);
     public static class FieldRequestParam{
         private String value;

@@ -1,7 +1,5 @@
 package org.jfw.apt.model.web.handlers.buildparam;
 
-import java.util.Locale;
-
 import org.jfw.apt.Utils;
 
 public class BaseListRPT extends AbstractRequestParamTransfer {
@@ -39,14 +37,14 @@ public class BaseListRPT extends AbstractRequestParamTransfer {
 
     @Override
     public void bulidParam() {
-    	String paramName =Utils.emptyToNull(this.annotation.value());
+    	String paramName =this.annotation.getParamNameInRequest();
     	if(paramName==null) paramName = this.mpe.getName();
         this.rmcg.readParameters(sb,paramName);
         String vn = this.mpe.getName();
         String tn = this.mpe.getTypeName();
         String en = tn.substring("java.util.List<".length(), tn.length()-1);
-        String dv = this.annotation.defaultValue();
-        if (this.annotation.required()) {
+        String dv = this.annotation.getDefaultValue();
+        if (this.annotation.isRequired()) {
             sb.append("if(null==params || params.length==0){");
             this.raiseNoFoundError(paramName);
             sb.append("}\r\n");
@@ -57,7 +55,7 @@ public class BaseListRPT extends AbstractRequestParamTransfer {
             this.transferToParams( this.mpe.getTypeName());
             sb.append(");\r\n}\r\n");
         } else {
-        	 sb.append(tn).append(" ").append(this.mpe.getName()).append(";");
+        	sb.append(tn).append(" ").append(this.mpe.getName()).append(";");
             sb.append("if(null!=params && params.length!=0){");
             sb.append(this.mpe.getName()).append(" = new java.util.ArrayList<")
             .append(en).append(">();");
@@ -66,10 +64,7 @@ public class BaseListRPT extends AbstractRequestParamTransfer {
             this.transferToParams( this.mpe.getTypeName());
             sb.append(");\r\n}\r\n");
             sb.append("}else{\r\n");
-            sb.append(vn)
-                    .append(" = ")
-                    .append(dv==null ||dv.trim().length() == 0 ? "null" : this.annotation
-                            .defaultValue());
+            sb.append(vn).append(" = ").append(dv==null ||dv.trim().length() == 0 ? "null" : dv);
             sb.append(";\r\n}\r\n");
         }
     }
@@ -93,37 +88,23 @@ public class BaseListRPT extends AbstractRequestParamTransfer {
             sb.append("for( int i = 0 ; i < params.length ; ++i){\r\n").append(localName).append(".add(");
             this.transferToParams(this.frp.getValueClassName());
             sb.append(");\r\n}\r\n");
-            sb.append(this.mpe.getName()).append(".set");
-			String fed = this.frp.getValue().trim();
-			sb.append(fed.substring(0, 1).toUpperCase(Locale.US));
-			if (fed.length() > 1)
-				sb.append(fed.substring(1));
-			sb.append("(");
-			sb.append(localName);
-			sb.append(");\r\n");
+            Utils.writeSetter(sb, this.mpe.getName(), this.frp.getValue(), localName);
         } else {
-        	 sb.append(tn).append(" ").append(localName).append(";");
             sb.append("if(null!=params && params.length!=0){");
-            sb.append(localName).append(" = new java.util.ArrayList<")
+            sb.append(tn).append(" ").append(localName).append(" = new java.util.ArrayList<")
             .append(en).append(">();");
             sb.append("for( int i = 0 ; i < params.length ; ++i){\r\n").append(localName)
                     .append(".add(");
             this.transferToParams(this.frp.getValueClassName());
             sb.append(");\r\n}\r\n");
-            sb.append("}else{\r\n");
-            sb.append(localName)
-                    .append(" = ")
-                    .append(dv==null ||dv.trim().length() == 0 ? "null" : this.annotation
-                            .defaultValue());
-            sb.append(";\r\n}\r\n");
-            sb.append(this.mpe.getName()).append(".set");
-			String fed = this.frp.getValue().trim();
-			sb.append(fed.substring(0, 1).toUpperCase(Locale.US));
-			if (fed.length() > 1)
-				sb.append(fed.substring(1));
-			sb.append("(");
-			sb.append(localName);
-			sb.append(");\r\n");
+            Utils.writeSetter(sb, this.mpe.getName(), this.frp.getValue(), localName);
+            sb.append("}");
+            if(dv!=null && dv.trim().length()>0 &&(!"null".equals(dv.trim()))){
+            	sb.append("else{\r\n");
+            	 Utils.writeSetter(sb, this.mpe.getName(), this.frp.getValue(), dv.trim());
+            	sb.append("}");
+            }
+            sb.append("\r\n");
         }
     }
 }

@@ -21,7 +21,7 @@ public abstract class ViewUtils {
 	public static void printJSONSuccess(ViewHandler handler,StringBuilder sb){
 		//res:HttpServletResponse
 		//out: jsp.out
-		 sb.append("out.writer(\"{\\\"success\\\":true}\");\r\n"); 	
+		 sb.append("out.write(\"{\\\"success\\\":true}\");\r\n"); 	
 	}
 	
 	public static void printJSPException(ViewHandler handler,StringBuilder sb){

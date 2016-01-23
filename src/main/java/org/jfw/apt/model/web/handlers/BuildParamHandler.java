@@ -9,6 +9,7 @@ import org.jfw.apt.exception.AptException;
 import org.jfw.apt.model.MethodParamEntry;
 import org.jfw.apt.model.web.RequestHandler;
 import org.jfw.apt.model.web.RequestMappingCodeGenerator;
+import org.jfw.apt.model.web.handlers.buildparam.RequestParamHandler;
 
 public class BuildParamHandler extends RequestHandler {
 
@@ -43,8 +44,7 @@ public class BuildParamHandler extends RequestHandler {
 			MethodParamEntry mpe = mpes.get(i);
 			BuildParameter bp = this.getBuilderParameter(mpe);
 			if (bp == null)
-				throw new AptException(mpe.getRef(),
-						"this parameter not has Annotation(" + BuildParameter.class.getName() + " buildParamClass())");
+				bp = new RequestParamHandler();
 			bp.build(sb, mpe, this.getRmcg());
 		}
 

@@ -1,12 +1,12 @@
 package org.jfw.apt.model.web.handlers.buildparam;
 
-import org.jfw.apt.annotation.web.RequestParam;
 import org.jfw.apt.exception.AptException;
 import org.jfw.apt.model.MethodParamEntry;
 import org.jfw.apt.model.web.RequestMappingCodeGenerator;
+import org.jfw.apt.model.web.RequestParamModel;
 
 public interface RequestParamTransfer {
-    void transfer(StringBuilder sb,MethodParamEntry mpe,RequestMappingCodeGenerator rmcg,RequestParam annotation) throws AptException;
+    void transfer(StringBuilder sb,MethodParamEntry mpe,RequestMappingCodeGenerator rmcg,RequestParamModel annotation) throws AptException;
     
     
     void transferBeanProperty(StringBuilder sb,MethodParamEntry mpe,RequestMappingCodeGenerator rmcg,RequestParamTransfer.FieldRequestParam frp);

@@ -12,7 +12,7 @@ import org.jfw.apt.model.web.handlers.buildparam.RequestHeaderHandler;
 public @interface RequestHeader {
 	String value() default "";
 	Class<?> clazz() default Object.class;
-	String defaultValue() default "null";
+	String defaultValue() default "";
 	boolean required() default true;
 	FieldParam[] fields() default {};
 	String[] excludeFields() default {};

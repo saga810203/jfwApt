@@ -19,7 +19,7 @@ public class RequestMappingCodeGenerator extends AbstractMethodGenerater {
 	public void readURI(StringBuilder sb, String pathAttribute) {
 		if (!readedURI) {
 			readedURI = true;
-			sb.append("String[] uriArray = (String[]) req.getAttribute(\"").append(pathAttribute.trim()).append("\");");
+			sb.append("String[] _uriArray = (String[]) req.getAttribute(\"").append(pathAttribute.trim()).append("\");");
 		}
 	}
 
@@ -48,11 +48,11 @@ public class RequestMappingCodeGenerator extends AbstractMethodGenerater {
 	public void readHeaders(StringBuilder sb, String paramName) {
 		if (!this.readedHeaders) {
 			readedHeaders = true;
-			sb.append("java.util.List<Stirng> headers = new java.util.LinkedList<String>();");
+			sb.append("java.util.List<String> headers = new java.util.LinkedList<String>();");
 			sb.append("java.util.Enumeration<String> ");
 		}
 		sb.append("enumHeaders = req.getHeaders(\"").append(paramName).append("\");\r\n");
-		sb.append("headers.clear();\r\n");
+		//sb.append("headers.clear();\r\n");
 		sb.append("while(enumHeaders.hasMoreElements()){\r\n").append("  headers.add(enumHeaders.nextElement());\r\n")
 				.append("}\r\n");
 		if (!readedStringArray) {
@@ -98,7 +98,7 @@ public class RequestMappingCodeGenerator extends AbstractMethodGenerater {
 		if (this.uri.length() == 0)
 			throw new AptException(ref, "invalid ReqeustMappeing value: empty String");
 
-		this.webMethodName = "h_" + this.name;
+		this.webMethodName = this.wsh.getServiceMethodName();
 		RequestHandler[] rs = this.wsh.createHandler();
 		for (int i = 0; i < rs.length; ++i) {
 			rs[i].init(this);

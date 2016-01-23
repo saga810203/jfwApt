@@ -11,7 +11,7 @@ import org.jfw.apt.model.web.handlers.buildparam.PathVarHandler;
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.SOURCE)
 public @interface PathVar {
-	String value();
+	String value() default "";
 	boolean encoding() default false;
 	String pathAttribute() default "org.jfw.web.reqMacthUri_DYN";
 	Class<? extends BuildParameter> buildParamClass() default PathVarHandler.class;

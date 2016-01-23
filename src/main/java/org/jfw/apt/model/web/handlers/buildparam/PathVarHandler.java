@@ -28,7 +28,7 @@ public class PathVarHandler extends BuildParamHandler.BuildParameter {
 		rmcg.readURI(sb,pv.pathAttribute());
 		String val = Utils.emptyToNull(pv.value());
 		if (val == null ) {
-			throw new AptException(mpe.getRef(),"invalid annotation @PathVar");
+			val = mpe.getName().trim();
 		}
 		String path = rmcg.getUri();
 		int pathIndex = getIndexInPath(val, path);
@@ -39,43 +39,43 @@ public class PathVarHandler extends BuildParamHandler.BuildParameter {
 		
 		String lTypeName = mpe.getTypeName();
 		if (lTypeName.equals(int.class.getName())) {
-			sb.append("Integer.parseInt(uriArray[").append(pathIndex).append("]);");
+			sb.append("Integer.parseInt(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(Integer.class.getName())) {
-			sb.append("Integer.valueof(uriArray[").append(pathIndex).append("]);");
+			sb.append("Integer.valueOf(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(byte.class.getName())) {
-			sb.append("Byte.parseByte(uriArray[").append(pathIndex).append("]);");
+			sb.append("Byte.parseByte(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(Byte.class.getName())) {
-			sb.append("Byte.valueof(uriArray[").append(pathIndex).append("]);");
+			sb.append("Byte.valueOf(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(short.class.getName())) {
-			sb.append("Short.parseShort(uriArray[").append(pathIndex).append("]);");
+			sb.append("Short.parseShort(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(Short.class.getName())) {
-			sb.append("Short.valueof(uriArray[").append(pathIndex).append("]);");
+			sb.append("Short.valueOf(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(long.class.getName())) {
-			sb.append("Long.parseLong(uriArray[").append(pathIndex).append("]);");
+			sb.append("Long.parseLong(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(Long.class.getName())) {
-			sb.append("Long.valueof(uriArray[").append(pathIndex).append("]);");
+			sb.append("Long.valueOf(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(double.class.getName())) {
-			sb.append("Double.parseDouble(uriArray[").append(pathIndex).append("]);");
+			sb.append("Double.parseDouble(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(Double.class.getName())) {
-			sb.append("Double.valueof(uriArray[").append(pathIndex).append("]);");
+			sb.append("Double.valueOf(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(float.class.getName())) {
-			sb.append("Float.parseFloat(uriArray[").append(pathIndex).append("]);");
+			sb.append("Float.parseFloat(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(Float.class.getName())) {
-			sb.append("Float.valueof(uriArray[").append(pathIndex).append("]);");
+			sb.append("Float.valueOf(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(boolean.class.getName()) || lTypeName.equals(Boolean.class.getName())) {
-			sb.append("\"1\".equals(uriArray[").append(pathIndex)
-					.append("])|| \"true\".equalsIgnoreCase(uriArray[").append(pathIndex)
-					.append("])||\"yes\".equalsIgnoreCase(uriArray[").append(pathIndex).append("])");
+			sb.append("\"1\".equals(_uriArray[").append(pathIndex)
+					.append("])|| \"true\".equalsIgnoreCase(_uriArray[").append(pathIndex)
+					.append("])||\"yes\".equalsIgnoreCase(_uriArray[").append(pathIndex).append("])");
 		} else if (lTypeName.equals(String.class.getName())) {
 			if (pv.encoding()) {
-				sb.append("java.net.URLDecoder.decode(uriArray[").append(pathIndex).append("],\"UTF-8\");");
+				sb.append("java.net.URLDecoder.decode(_uriArray[").append(pathIndex).append("],\"UTF-8\");");
 			} else {
-				sb.append("uriArray[").append(pathIndex).append("]");
+				sb.append("_uriArray[").append(pathIndex).append("];");
 			}
 		} else if (lTypeName.equals(java.math.BigInteger.class.getName())) {
-			sb.append("java.math.BigInteger.valueof(uriArray[").append(pathIndex).append("]);");
+			sb.append("java.math.BigInteger.valueOf(_uriArray[").append(pathIndex).append("]);");
 		} else if (lTypeName.equals(java.math.BigDecimal.class.getName())) {
-			sb.append("java.math.BigDecimal.valueof(uriArray[").append(pathIndex).append("]);");
+			sb.append("java.math.BigDecimal.valueOf(_uriArray[").append(pathIndex).append("]);");
 		} else {
 			throw new AptException(mpe.getRef(),"UnSupportedType on paramter with @PathVar");
 		}
