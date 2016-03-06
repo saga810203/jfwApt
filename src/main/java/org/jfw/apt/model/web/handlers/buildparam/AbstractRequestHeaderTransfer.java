@@ -1,6 +1,5 @@
 package org.jfw.apt.model.web.handlers.buildparam;
 
-import org.jfw.apt.annotation.web.RequestHeader;
 import org.jfw.apt.model.MethodParamEntry;
 import org.jfw.apt.model.web.RequestHeaderModel;
 import org.jfw.apt.model.web.RequestMappingCodeGenerator;

@@ -16,7 +16,7 @@
 package org.jfw.apt.model.core;
 
 import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.Type;
+
 import javax.lang.model.type.ArrayType;
 
 

@@ -35,10 +35,12 @@ import javax.tools.ToolProvider;
 import org.jfw.apt.exception.AptException;
 import org.jfw.apt.model.orm.OrmDefine;
 import org.jfw.apt.model.orm.PersistentObject;
+import org.jfw.apt.out.model.BeanConfig;
 
 @SupportedAnnotationTypes("*")
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
+	private BeanConfig beanConfig = new BeanConfig();
 	private Messager messager;
 	private Filer filer;
 	private Map<String, Object> attributes = new HashMap<String, Object>();
@@ -195,12 +197,12 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 					CodeGenerateHandler cgh = null;
 					try {
 						cgh =cghcls.newInstance();
-						if (!afterEvents.containsKey(cgh.getClass())) {
-							CodeGenerateAllAfterEventByType cgaaebt = cgh.getStaticAfterEvent();
-							if (cgaaebt != null) {
-								afterEvents.put(cgh.getClass(), cgaaebt);
-							}
-						}
+//						if (!afterEvents.containsKey(cgh.getClass())) {
+//							CodeGenerateAllAfterEventByType cgaaebt = cgh.getStaticAfterEvent();
+//							if (cgaaebt != null) {
+//								afterEvents.put(cgh.getClass(), cgaaebt);
+//							}
+//						}
 
 					} catch (Exception e) {
 						throw new AptException(ele, "create Object instance with " + cghcls.getName()
@@ -259,6 +261,11 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 		this.setAttribute(Filer.class.getName(), this.filer);
 		try {
 			this.handle(annotations, roundEnv);
+			if(annotations.isEmpty()){
+				StringBuilder sb = new StringBuilder();
+				this.beanConfig.appendTo(sb);
+				this.saveResourceFile("beanConfig.properties", sb.toString());
+			}
 		} catch (AptException e) {
 			this.messager.printMessage(Kind.ERROR, e.getMessage(), e.getEle());
 			e.printStackTrace();
@@ -269,6 +276,7 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 				m = "nullException";
 			this.messager.printMessage(Kind.ERROR, m, this.currentElement);
 		}
+		
 
 		return true;
 	}
@@ -322,6 +330,9 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 
 	public RoundEnvironment getRoundEnv() {
 		return roundEnv;
+	}
+	public BeanConfig getBeanConfig(){
+		return this.beanConfig;
 	}
 
 }

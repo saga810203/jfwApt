@@ -10,5 +10,5 @@ import org.jfw.apt.exception.AptException;
 public interface CodeGenerateHandler {
 	void setEnv(Map<String,Object> env);
 	void handle(TypeElement ref,AnnotationMirror am,Object annotationObj) throws AptException;
-	CodeGenerateAllAfterEventByType getStaticAfterEvent();
+//	CodeGenerateAllAfterEventByType getStaticAfterEvent();
 }

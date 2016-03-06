@@ -140,10 +140,10 @@ public abstract class AbstractCodeGenerateHandler implements CodeGenerateHandler
 		
 	}
 
-	@Override
-	public CodeGenerateAllAfterEventByType getStaticAfterEvent() {
-		return null;
-	}
+//	@Override
+//	public CodeGenerateAllAfterEventByType getStaticAfterEvent() {
+//		return null;
+//	}
 	
 
 }

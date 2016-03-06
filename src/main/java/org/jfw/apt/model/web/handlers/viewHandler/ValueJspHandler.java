@@ -59,7 +59,12 @@ public class ValueJspHandler extends ViewHandler.ViewHandlerImpl {
 			sb.append("req.setAttribute(\"").append(this.dataName).append("\",result);\r\n");
 		}
 
-		sb.append("String _jspView = ").append(this.value).append(";\r\n");
+		sb.append("String _jspView = ");
+		if(this.prefix!=null&& this.prefix.trim().length()>0){
+			sb.append("\"").append(this.prefix.trim()).append("\" + ");
+		}
+		sb.append(this.value).append(".jsp").append(";\r\n");
+		
 		sb.append("req.getRequestDispatcher(_jspView).forward(req,res);");
 	}
 }

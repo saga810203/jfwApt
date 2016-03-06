@@ -14,6 +14,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.MirroredTypesException;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.JavaFileObject;
@@ -25,53 +26,59 @@ import org.jfw.apt.model.core.TypeName;
 import org.jfw.apt.model.web.RequestHandler;
 import org.jfw.apt.model.web.RequestMappingCodeGenerator;
 import org.jfw.apt.model.web.RequestMethod;
+import org.jfw.apt.out.model.BeanConfig;
+import org.jfw.apt.out.model.ClassBeanDefine;
 
 public class WebHandlerSupported implements CodeGenerateHandler {
-	
-	
-	private static List<RequestEntry> reqs = new ArrayList<RequestEntry>();
+
+	// private static List<RequestEntry> reqs = new ArrayList<RequestEntry>();
+	// private static List<MvcBean> mvcBeans = new ArrayList<MvcBean>();
 
 	protected Map<String, Object> env;
 	protected TypeElement ref;
 	protected Messager messager;
+	protected BeanConfig beanConfig;
 	protected Filer filer;
 	protected String packageName = "";
 	protected String className;
-	protected String uri="";
+	protected String uri = "";
 	protected WebHandler wh;
 	protected int methodSeq = 0;
+	protected String defaultHandlerClassName;
+
+	protected ClassBeanDefine cbd;
 
 	protected StringBuilder sb;
 	private boolean threadSafe;
-	
+
 	@SuppressWarnings("unchecked")
-	private List<Class<? extends RequestHandler>> getHandlerClass() throws AptException{
-		
+	private List<Class<? extends RequestHandler>> getHandlerClass() throws AptException {
+
 		List<Class<? extends RequestHandler>> result = new ArrayList<Class<? extends RequestHandler>>();
-		Class<? extends RequestHandler>[] clss =null;
-		try{
-			clss= wh.handler();
-			for(int i = 0 ; i < clss.length ; ++i){
+		Class<? extends RequestHandler>[] clss = null;
+		try {
+			clss = wh.handler();
+			for (int i = 0; i < clss.length; ++i) {
 				result.add(clss[i]);
 			}
-		}catch(MirroredTypesException e){
-			List<? extends TypeMirror> list =e.getTypeMirrors();
-			for(int i = 0 ; i < list.size() ; ++i){
+		} catch (MirroredTypesException e) {
+			List<? extends TypeMirror> list = e.getTypeMirrors();
+			for (int i = 0; i < list.size(); ++i) {
 				TypeName tn = TypeName.get(list.get(i));
 				try {
-					result.add((Class<? extends RequestHandler>) Class.forName(tn.toString()));			
+					result.add((Class<? extends RequestHandler>) Class.forName(tn.toString()));
 				} catch (Exception e1) {
-					throw new AptException(ref, "unknow Exception:"+e1.getMessage());
+					throw new AptException(ref, "unknow Exception:" + e1.getMessage());
 				}
 			}
 		}
 		return result;
-		
+
 	}
 
 	public RequestHandler[] createHandler() throws AptException {
 		List<Class<? extends RequestHandler>> list = this.getHandlerClass();
-		RequestHandler[]  handlers  = new RequestHandler[list.size()];
+		RequestHandler[] handlers = new RequestHandler[list.size()];
 		for (int i = 0; i < list.size(); ++i) {
 			try {
 				handlers[i] = list.get(i).newInstance();
@@ -88,13 +95,13 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 		this.env = env;
 		this.messager = (Messager) env.get(Messager.class.getName());
 		this.filer = (Filer) env.get(Filer.class.getName());
+		this.beanConfig = ((JfwProccess) env.get(JfwProccess.class.getName())).getBeanConfig();
 	}
 
 	public static String getAnnotationClassName(AnnotationMirror am) {
 		TypeElement type = (TypeElement) am.getAnnotationType().asElement();
 		return type.getQualifiedName().toString();
 	}
-
 
 	public String getTargetClassPackage() {
 		if (this.packageName.length() == 0)
@@ -107,70 +114,98 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 	}
 
 	protected void writeContent() throws AptException {
-		for(Element ele:this.ref.getEnclosedElements()){
-			if(ele.getKind()==ElementKind.METHOD){
+		for (Element ele : this.ref.getEnclosedElements()) {
+			if (ele.getKind() == ElementKind.METHOD) {
 				RequestMapping rm = ele.getAnnotation(RequestMapping.class);
-				if(rm==null) continue;
-				
-				String vuri =Utils.emptyToNull(rm.value());
-				if(vuri==null) vuri ="";				
-				vuri = this.uri==null?"":this.uri+vuri;	
-				if(vuri.length()==0 || !vuri.startsWith("/"))
-					throw new AptException(ele,"invalid annotation @RequestMapping(value)");
-				
+				if (rm == null)
+					continue;
+
+				String vuri = Utils.emptyToNull(rm.value());
+				if (vuri == null)
+					vuri = "";
+				vuri = this.uri == null ? "" : this.uri + vuri;
+				if (vuri.length() == 0 || !vuri.startsWith("/"))
+					throw new AptException(ele, "invalid annotation @RequestMapping(value)");
+
 				RequestMappingCodeGenerator rmcg = new RequestMappingCodeGenerator();
-				rmcg.fillMeta((ExecutableElement)ele);
+				rmcg.fillMeta((ExecutableElement) ele);
 				rmcg.setWebHandlerSupported(this);
 				rmcg.setUri(vuri);
 				rmcg.writeMethod(sb);
-				
 
-				RequestEntry re = new RequestEntry();
-				re.setMethod(rmcg.getWebMethodName());
-				re.setUri(vuri);
-				re.setRequestMethods(rm.method());
-				re.setClassName(this.getTargetClassPackage()+"."+this.getTargetClassName());
-				reqs.add(re);
+				for (RequestMethod m : rm.method()) {
+
+					ClassBeanDefine wre = this.beanConfig.addEntryBeanByClass("org.jfw.util.web.model.WebRequestEntry",
+							null);
+					wre.setRefAttribute("webHandler", this.cbd.getId());
+					wre.setString("uri", vuri);
+					wre.setString("methodName", rmcg.getWebMethodName());
+					wre.setString("methodType", m.toString());
+					wre.joinGroup("jfwmvc");
+
+				}
 			}
 		}
+	}
+
+	protected void writeInstanceVariable() {
+
+		if (!this.threadSafe) {
+			sb.append(
+					" private org.jfw.util.comm.ObjectFactory handlerFactory = new org.jfw.util.comm.ObjectFactory(){\r\n");
+			sb.append("@Override\r\n").append("public Object get(){\r\n").append("try{\r\n").append("return ")
+					.append(this.packageName).append(this.className).append(".class.newInstance();\r\n")
+					.append("}catch(Exception e){\r\n")
+					.append("throw new RuntimeException(\"create class[" + this.packageName + this.className
+							+ "] instance error\",e);\r\n")
+					.append("}\r\n}\r\n")
+					.append("public void setHandlerFactory(org.jfw.util.comm.ObjectFactory handlerFactory){\r\n")
+					.append("    this.handlerFactory = handlerFactory;\r\n}\r\n");
+		} else {
+			sb.append("private ").append(this.packageName).append(this.className).append(" handler = null;\r\n");
+			sb.append("public void setHandler(").append(this.packageName).append(this.className)
+					.append(" value)\r\n{\r\n handler = value;\r\n}\r\n");
+		}
+
 	}
 
 	protected void writeFile() throws AptException {
 		String tpn = this.getTargetClassPackage();
 		String tcn = this.getTargetClassName();
-		try {
 
+		try {
 
 			this.sb = new StringBuilder();
 			if (this.packageName.length() > 0) {
 				sb.append("package ").append(this.getTargetClassPackage()).append(";\r\n");
 			}
 			sb.append("public class ").append(this.getTargetClassName()).append(" {");
-			sb.append("private static String handlerClassName = null;");
-			if (!this.threadSafe) {
-				sb.append("private static Class<?> handlerClass = null;\r\n");
-			} else {
-				sb.append("private static ").append(this.packageName).append(this.className).append(" handler = null;\r\n");
-			}
-			sb.append("public static void build(){");
-			if (this.threadSafe) {
-				sb.append("try{").append(tcn).append(".handler =(").append(packageName).append(className)
-						.append(")Class.forName(").append(tcn)
-						.append(".handlerClassName).newInstance();}catch(Exception e){throw new RuntimeException(\"create object instance error with class name:\"+")
-						.append(tcn).append(".handlerClassName");
-				sb.append(",e);}\r\n");
-			} else {
-				sb.append("try{").append(tcn).append(".handlerClass = Class.forName(").append(tcn)
-						.append(".handlerClassName);\r\n")
-						.append("}catch(Exception e){throw new RuntimeException(\"create class with class name:\"+")
-						.append(tcn).append(".handlerClassName");
-				sb.append(",e);}\r\n");
-			}
-			sb.append("}\r\n");
+			this.writeInstanceVariable();
+
+			// sb.append("public static void build(){");
+			// if (this.threadSafe) {
+			// sb.append("try{").append(tcn).append(".handler
+			// =(").append(packageName).append(className)
+			// .append(")Class.forName(").append(tcn)
+			// .append(".handlerClassName).newInstance();}catch(Exception
+			// e){throw new RuntimeException(\"create object instance error with
+			// class name:\"+")
+			// .append(tcn).append(".handlerClassName");
+			// sb.append(",e);}\r\n");
+			// } else {
+			// sb.append("try{").append(tcn).append(".handlerClass =
+			// Class.forName(").append(tcn)
+			// .append(".handlerClassName);\r\n")
+			// .append("}catch(Exception e){throw new RuntimeException(\"create
+			// class with class name:\"+")
+			// .append(tcn).append(".handlerClassName");
+			// sb.append(",e);}\r\n");
+			// }
+			// sb.append("}\r\n");
 
 			this.writeContent();
 			sb.append("\r\n}");
-			JavaFileObject jfo = this.filer.createSourceFile(tpn.length() == 0 ? "" : (tpn + ".") + tcn,this.ref);
+			JavaFileObject jfo = this.filer.createSourceFile(tpn.length() == 0 ? "" : (tpn + ".") + tcn, this.ref);
 			Writer w = jfo.openWriter();
 			try {
 				w.write(sb.toString());
@@ -184,30 +219,41 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 
 	@Override
 	public void handle(TypeElement ref, AnnotationMirror am, Object annotationObj) throws AptException {
-		
-		
-		
+
 		this.ref = ref;
 		if (null == ref.getEnclosedElements() || ref.getEnclosingElement().getKind() != ElementKind.PACKAGE)
 			throw new AptException(ref, "@WebHandler annotation target not internal class");
 		wh = ref.getAnnotation(WebHandler.class);
-		String vuri =Utils.emptyToNull(wh.value());
-		DeclaredType dt =(DeclaredType) ref.asType();
-		if(!dt.getTypeArguments().isEmpty()) throw new AptException(ref,"@WebHandler annotation target not Parameterized class");
-		if(vuri==null){
-			vuri ="";
-		}else{
-			if(!vuri.startsWith("/")){
-				throw new AptException(ref,"@WebHandler'value must be startsWith '/'");
+		try {
+			try {
+				this.defaultHandlerClassName = wh.defaultHandlerClass().getName();
+			} catch (MirroredTypeException e) {
+				this.defaultHandlerClassName = TypeName.get(e.getTypeMirror()).toString();
+			}
+		} catch (Exception e) {
+			this.defaultHandlerClassName = null;
+		}
+
+		String vuri = Utils.emptyToNull(wh.value());
+		DeclaredType dt = (DeclaredType) ref.asType();
+		if (!dt.getTypeArguments().isEmpty())
+			throw new AptException(ref, "@WebHandler annotation target not Parameterized class");
+		if (vuri == null) {
+			vuri = "";
+		} else {
+			if (!vuri.startsWith("/")) {
+				throw new AptException(ref, "@WebHandler'value must be startsWith '/'");
 			}
 		}
-		this.uri = vuri;		
-		
+		this.uri = vuri;
+
 		this.threadSafe = wh.threadSafe();
 		List<Class<? extends RequestHandler>> list = this.getHandlerClass();
 		if (list.isEmpty())
 			throw new AptException(ref, "@WebHandler'handler not null or empty array");
 		String cn = ref.getQualifiedName().toString();
+		if (this.defaultHandlerClassName == null)
+			this.defaultHandlerClassName = cn;
 		int index = cn.lastIndexOf(".");
 		if (index > 0) {
 			this.packageName = cn.substring(0, index + 1);
@@ -215,78 +261,44 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 		} else {
 			this.className = cn;
 		}
+		// MvcBean mvc = MvcBean.build(cn, this.defaultHandlerClassName,
+		// threadSafe);
+		// mvcBeans.add(mvc);
+
+		this.addToBeanConfig();
+
 		this.writeFile();
 	}
-	
-	public String getServiceMethodName(){
-		return "ws_"+(++this.methodSeq);
+
+	private void addToBeanConfig() {
+		this.cbd = beanConfig.addServiceBeanByClass(this.packageName + this.getTargetClassName(), null);
+
+		if (this.threadSafe) {
+			ClassBeanDefine h = this.beanConfig.addServiceBeanByClass(this.packageName + this.className, null);
+			this.cbd.setRefAttribute("handler", h.getId());
+		} else {
+			ClassBeanDefine of = this.beanConfig.addServiceBeanByClass("org.jfw.util.comm.ClassCreateFactory",
+					(this.packageName + this.className + "@factroy").replaceAll("\\.", "_"));
+			of.setClass("clazz", this.packageName + this.className);
+			this.cbd.setRefAttribute("handlerFactory", of.getId());
+		}
+
 	}
-	
+
+	public String getServiceMethodName() {
+		return "ws_" + (++this.methodSeq);
+	}
+
 	public boolean isThreadSafe() {
 		return threadSafe;
 	}
-	
-	
+
 	public String getPackageName() {
 		return packageName;
 	}
 
 	public String getClassName() {
 		return className;
-	}
-
-
-	public static class RequestEntry{
-		private String ClassName;
-		private String uri;
-		private String method;
-		private RequestMethod[] requestMethods;
-		
-		public String getClassName() {
-			return ClassName;
-		}
-		public void setClassName(String className) {
-			ClassName = className;
-		}
-		public String getUri() {
-			return this.uri;
-		}
-		public void setUri(String uri) {
-			this.uri = uri;
-		}
-		public String getMethod() {
-			return method;
-		}
-		public void setMethod(String method) {
-			this.method = method;
-		}
-		public RequestMethod[] getRequestMethods() {
-			return requestMethods;
-		}
-		public void setRequestMethods(RequestMethod[] rm) {
-			this.requestMethods = rm;
-		}
-	
-		
-	}
-
-
-	@Override
-	public CodeGenerateAllAfterEventByType getStaticAfterEvent() {
-		return new CodeGenerateAllAfterEventByType() {
-			
-			@Override
-			public void execute(JfwProccess jp) throws AptException {
-				StringBuilder sb = new StringBuilder();
-				for(RequestEntry re:reqs){
-					for(RequestMethod rm: re.getRequestMethods()){
-						sb.append(rm.toString()).append(":").append(re.getUri()).append(";").append(re.getClassName()).append(".").append(re.getMethod())
-						.append("\r\n");
-					}
-				}
-				jp.saveResourceFile("jfw_web_dispatcher.properties", sb.toString());
-			}
-		};
 	}
 
 }
