@@ -15,16 +15,21 @@ public class ExecuteHandler extends RequestHandler{
 
 	@Override
 	public void appendBeforCode(StringBuilder sb) throws AptException {
-		String ln = this.getRmcg().getTempalteVariableName();
+//		String ln = this.getRmcg().getTempalteVariableName();
 		
 		List<MethodParamEntry> mpes = this.rmcg.getParams();
+//		if(!this.rmcg.getWebHandlerSupported().isThreadSafe()){
+//			sb.append(this.rmcg.getWebHandlerSupported().getPackageName()).append(this.rmcg.getWebHandlerSupported().getClassName())
+//			.append(" handler = null;\r\ntry{handler = (").append(this.rmcg.getWebHandlerSupported().getPackageName())
+//			.append(this.rmcg.getWebHandlerSupported().getClassName()).append(")")
+//			.append(this.getRmcg().getWebHandlerSupported().getTargetClassName())
+//			.append(".handlerClass.newInstance();\r\n}catch(Exception ").append(ln).append("){throw new RuntimeException(\"create object instance error with class name:\"+")
+//			.append(this.getRmcg().getWebHandlerSupported().getTargetClassName()).append(".handlerClass.getName());}");
+//		}
 		if(!this.rmcg.getWebHandlerSupported().isThreadSafe()){
 			sb.append(this.rmcg.getWebHandlerSupported().getPackageName()).append(this.rmcg.getWebHandlerSupported().getClassName())
-			.append(" handler = null;\r\ntry{handler = (").append(this.rmcg.getWebHandlerSupported().getPackageName())
-			.append(this.rmcg.getWebHandlerSupported().getClassName()).append(")")
-			.append(this.getRmcg().getWebHandlerSupported().getTargetClassName())
-			.append(".handlerClass.newInstance();\r\n}catch(Exception ").append(ln).append("){throw new RuntimeException(\"create object instance error with class name:\"+")
-			.append(this.getRmcg().getWebHandlerSupported().getTargetClassName()).append(".handlerClass.getName());}");
+			.append(" handler  = (").append(this.rmcg.getWebHandlerSupported().getPackageName())
+			.append(this.rmcg.getWebHandlerSupported().getClassName()).append(")handlerFactory.get();\r\n");
 		}
 		
 		
