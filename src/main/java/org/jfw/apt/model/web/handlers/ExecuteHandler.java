@@ -36,10 +36,10 @@ public class ExecuteHandler extends RequestHandler{
 		if(!"void".equals(this.rmcg.getReturnType())){
 			sb.append("result = ");
 		}
-		if(this.rmcg.getWebHandlerSupported().isThreadSafe()){
-			sb.append(this.rmcg.getWebHandlerSupported().getTargetClassName()).append(".");
-		}
-		sb.append("handler.").append(this.getRmcg().getName()).append("(");
+//		if(this.rmcg.getWebHandlerSupported().isThreadSafe()){
+//			sb.append(this.rmcg.getWebHandlerSupported().getTargetClassName()).append(".");
+//		}
+		sb.append(" handler.").append(this.getRmcg().getName()).append("(");
 		if(mpes!=null&& mpes.size()>0){
 			for(int i = 0 ; i < mpes.size() ; ++i){
 				if(i!=0)sb.append(",");

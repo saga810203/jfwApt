@@ -31,8 +31,8 @@ public class PathVarHandler extends BuildParamHandler.BuildParameter {
 			val = mpe.getName().trim();
 		}
 		String path = rmcg.getUri();
-		int pathIndex = getIndexInPath(val, path);
-		if (pathIndex <= 0)
+		int pathIndex = getIndexInPath(val, path)-1;
+		if (pathIndex < 0)
 			throw new AptException(mpe.getRef(),"invalid annotation @PathVar ");
 		
 		sb.append(mpe.getTypeName()).append(" ").append(mpe.getName()).append(" = ");

@@ -23,7 +23,7 @@ public class BeanConfig {
 
 	public ClassBeanDefine addEntryBeanByClass(String classname, String id) {
 		if (id == null || id.trim().length() == 0)
-			id = java.util.UUID.randomUUID().toString().replaceAll("_", "");
+			id = java.util.UUID.randomUUID().toString().replaceAll("-", "");
 
 		ClassBeanDefine cbd = new ClassBeanDefine(classname);
 		cbd.setId(id);

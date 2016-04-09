@@ -24,5 +24,5 @@ public @interface WebHandler {
 			SetSessionHandler.class, LastScriptHandler.class };
 
 	String value() default "";
-	Class<?> defaultHandlerClass();
+	Class<?> defaultHandlerClass() default Object.class;
 }

@@ -252,7 +252,7 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 		if (list.isEmpty())
 			throw new AptException(ref, "@WebHandler'handler not null or empty array");
 		String cn = ref.getQualifiedName().toString();
-		if (this.defaultHandlerClassName == null)
+		if (this.defaultHandlerClassName == null || (this.defaultHandlerClassName.equals("java.lang.Object")))
 			this.defaultHandlerClassName = cn;
 		int index = cn.lastIndexOf(".");
 		if (index > 0) {
@@ -274,11 +274,11 @@ public class WebHandlerSupported implements CodeGenerateHandler {
 		this.cbd = beanConfig.addServiceBeanByClass(this.packageName + this.getTargetClassName(), null);
 
 		if (this.threadSafe) {
-			ClassBeanDefine h = this.beanConfig.addServiceBeanByClass(this.packageName + this.className, null);
+			ClassBeanDefine h = this.beanConfig.addServiceBeanByClass(this.defaultHandlerClassName, null);
 			this.cbd.setRefAttribute("handler", h.getId());
 		} else {
 			ClassBeanDefine of = this.beanConfig.addServiceBeanByClass("org.jfw.util.comm.ClassCreateFactory",
-					(this.packageName + this.className + "@factroy").replaceAll("\\.", "_"));
+					(this.defaultHandlerClassName+ "@factroy").replaceAll("\\.", "_"));
 			of.setClass("clazz", this.packageName + this.className);
 			this.cbd.setRefAttribute("handlerFactory", of.getId());
 		}
