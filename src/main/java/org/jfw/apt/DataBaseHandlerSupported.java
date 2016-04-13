@@ -30,8 +30,6 @@ public class DataBaseHandlerSupported extends AbstractCodeGenerateHandler {
 
 	@Override
 	protected void writeContent(StringBuilder sb) throws AptException {
-		sb.append("public static final ") .append(this.className).append(" ").append(Utils.classNameToInstanceName(this.className)).append(" = new ");
-		sb.append(this.className).append("();\r\n");
 		for (Element ele : this.ref.getEnclosedElements()) {
 			if (ele.getKind() == ElementKind.METHOD) {
 				List<? extends AnnotationMirror> ans = ele.getAnnotationMirrors();
@@ -57,6 +55,16 @@ public class DataBaseHandlerSupported extends AbstractCodeGenerateHandler {
 			}
 		}
 
+	}
+
+	@Override
+	public boolean isManagedByBeanFactory() {
+		return false;
+	}
+
+	@Override
+	public boolean isGenerateClassManagedByBeanFactory() {
+		return true;
 	}
 
 }

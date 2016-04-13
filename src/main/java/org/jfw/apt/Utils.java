@@ -14,10 +14,19 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.NoType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 
+import org.jfw.apt.annotation.Autowrie;
 import org.jfw.apt.exception.AptException;
+import org.jfw.apt.model.core.TypeName;
 import org.jfw.apt.model.orm.Column;
 import org.jfw.apt.orm.core.OrmHandler;
+import org.jfw.apt.out.model.ClassBeanDefine;
 
 public class Utils {
 	private static Map<Class<?>, Class<?>> wrapClass = new HashMap<Class<?>, Class<?>>();
@@ -26,8 +35,7 @@ public class Utils {
 	private Utils() {
 	}
 
-	public static void writeSetterBeforePart(StringBuilder sb, String objName, String attrName)
-	{
+	public static void writeSetterBeforePart(StringBuilder sb, String objName, String attrName) {
 		sb.append(objName.trim()).append(".set");
 		String fed = attrName.trim();
 		sb.append(fed.substring(0, 1).toUpperCase(Locale.US));
@@ -35,7 +43,7 @@ public class Utils {
 			sb.append(fed.substring(1));
 		sb.append("(");
 	}
-	
+
 	public static void writeSetter(StringBuilder sb, String objName, String attrName, String valName) {
 		writeSetterBeforePart(sb, objName, attrName);
 		sb.append(valName.trim());
@@ -398,6 +406,70 @@ public class Utils {
 			result.append(separator).append(parts.get(i));
 		}
 		return result.toString();
+	}
+
+	public static void fillAutowrieElement(Map<String, String> map, TypeElement typeEle) {
+		for (Element ele : typeEle.getEnclosedElements()) {
+			if(ele.getModifiers().contains(Modifier.STATIC)) continue;
+			if(ele.getKind()==ElementKind.FIELD){
+				Autowrie aw = ele.getAnnotation(Autowrie.class);
+				if(null == aw) continue;
+				String name = ele.getSimpleName().toString();
+				if(map.containsKey(name)) continue;
+				String refName = aw.value();
+				if(refName==null || refName.trim().length()==0){
+					TypeMirror tm = ele.asType();
+					if(tm.getKind()!=TypeKind.DECLARED) continue;
+					refName = TypeName.get(tm).toString().replaceAll("\\.","_");					
+				}
+				map.put(name, refName.trim());				
+			}else if(ele.getKind()==ElementKind.METHOD){
+				Autowrie aw = ele.getAnnotation(Autowrie.class);
+				if(aw==null) continue;
+				
+				ExecutableElement ee = (ExecutableElement) ele;
+				if(!TypeName.get(ee.getReturnType()).equals(TypeName.VOID)) continue;
+				String mn = ee.getSimpleName().toString();
+				if((mn.length()<4)||(!mn.startsWith("set"))) continue;
+				List<? extends VariableElement> params = ee.getParameters();
+				if(params.size()!=1) continue;
+				mn = mn.substring(3);
+				if(mn.length()==1) mn = mn.toLowerCase(Locale.US);
+				else
+					mn = mn.substring(0,1).toLowerCase(Locale.US)+mn.substring(1);
+				
+				if(map.containsKey(mn)) continue;
+				String refName = aw.value();
+				if(refName==null || refName.trim().length()==0){
+					VariableElement param = params.get(0);
+					refName =TypeName.get(param.asType()).toString().replaceAll("\\.","_");					
+				}
+				map.put(mn,refName);
+			}
+		}
+
+		TypeMirror tm = typeEle.getSuperclass();
+		if (tm instanceof NoType)
+			return;
+		if (tm.getKind() != TypeKind.DECLARED)
+			return;
+
+		try {
+			DeclaredType dt = (DeclaredType) tm;
+			fillAutowrieElement(map,(TypeElement) dt.asElement());
+		} catch (Throwable th) {
+			return;
+		}
+	}
+	
+	
+	public static void buildAtuowrieProperty(ClassBeanDefine cbd ,TypeElement ele){
+		Map<String,String> map = new HashMap<String,String>();
+		fillAutowrieElement(map, ele);
+		for(Map.Entry<String,String> entry:map.entrySet()){
+			cbd.setRefAttribute(entry.getValue(),entry.getValue());
+		}
+		
 	}
 
 	static {

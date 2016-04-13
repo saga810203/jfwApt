@@ -17,9 +17,6 @@ import org.jfw.apt.model.web.handlers.ViewHandler;
 @Retention(RetentionPolicy.SOURCE)
 public @interface WebHandler {
 	Class<?> handlerClass() default WebHandlerSupported.class;
-
-	boolean threadSafe() default true;
-
 	Class<? extends RequestHandler>[] handler() default {ViewHandler.class, BuildParamHandler.class, ExecuteHandler.class,
 			SetSessionHandler.class, LastScriptHandler.class };
 

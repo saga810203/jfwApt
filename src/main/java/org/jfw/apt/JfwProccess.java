@@ -21,6 +21,8 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.tools.Diagnostic.Kind;
@@ -32,10 +34,16 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 
+import org.jfw.apt.annotation.Bean;
+import org.jfw.apt.annotation.BuildBean;
+import org.jfw.apt.annotation.FactoryBean;
+import org.jfw.apt.annotation.ThreadSafe;
 import org.jfw.apt.exception.AptException;
+import org.jfw.apt.model.core.TypeName;
 import org.jfw.apt.model.orm.OrmDefine;
 import org.jfw.apt.model.orm.PersistentObject;
 import org.jfw.apt.out.model.BeanConfig;
+import org.jfw.apt.out.model.ClassBeanDefine;
 
 @SupportedAnnotationTypes("*")
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
@@ -130,6 +138,69 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 		this.roundEnv = roundEnv;
 		this.handleOrm();
 		this.handleCodeGenerateHandler();
+		this.handleBean();
+	}
+
+	private void handleBuildBean(TypeElement ele) throws AptException {
+		for (Element el : ele.getEnclosedElements()) {
+			BuildBean bd = el.getAnnotation(BuildBean.class);
+			if (el.getKind() != ElementKind.METHOD) {
+				throw new AptException(el, "@BuildBean must embellish public static method");
+			}
+			this.currentElement = el;
+			ExecutableElement ee = (ExecutableElement) el;
+
+			TypeName tn = TypeName.get(ee.getReturnType());
+			if (tn.isPrimitive())
+				throw new AptException(el, "method with @BuildBean must return Reference Class");
+			Set<Modifier> ms = ee.getModifiers();
+			if (!ms.contains(Modifier.STATIC) || !ms.contains(Modifier.PUBLIC))
+				throw new AptException(el, "@BuildBean must embellish public static method");
+			if (!ee.getParameters().isEmpty())
+				throw new AptException(el, "@BuildBean must embellish empty paramter method");
+			String nm = bd.value();
+			if (nm == null || nm.trim().length() == 0) {
+				nm=ee.getReturnType().toString().replaceAll("\\.", "_")+"@builder";
+			}
+			nm = nm.trim();
+			this.beanConfig.addServiceBeanByBuilder(ele.getQualifiedName().toString(), ee.getSimpleName().toString(), nm);
+
+		}
+	}
+
+	private void handleBean() throws AptException {
+		for (Element ele : this.rootElements) {
+			this.currentElement = ele;
+			if (ele.getKind() == ElementKind.CLASS || ele.getKind() == ElementKind.INTERFACE) {
+				TypeElement te = (TypeElement) ele;
+				handleBuildBean(te);
+				Bean bean = ele.getAnnotation(Bean.class);
+				FactoryBean fb = ele.getAnnotation(FactoryBean.class);
+				if (bean != null && fb != null)
+					throw new AptException(ele, "@Bean @FactoryBean choose one");
+				if (bean == null && fb == null)
+					continue;
+				if (bean != null) {
+					String bn = bean.value();
+					if (bn == null || bn.trim().length() == 0) {
+						bn = te.getQualifiedName().toString().replaceAll("\\.", "_").trim();
+					}
+					bn = bn.trim();
+					ClassBeanDefine cbd = this.beanConfig.addServiceBeanByClass(te.getQualifiedName().toString(), null);
+					Utils.buildAtuowrieProperty(cbd, te);
+				} else {
+					String bn = fb.value();
+					if (bn == null || bn.trim().length() == 0) {
+						bn = te.getQualifiedName().toString().replaceAll("\\.", "_").trim() + "@factory";
+					}
+					bn = bn.trim();
+					ClassBeanDefine cbd = this.beanConfig.addServiceBeanByClass("org.jfw.util.comm.ClassCreateFactory",
+							bn);
+					cbd.setAttribute("clazz", te.getQualifiedName().toString(), "java.lang.Class");
+				}
+			}
+		}
+
 	}
 
 	// private void warnMethodInfo(TypeElement ref) throws AptException{
@@ -173,8 +244,6 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 	// }
 
 	private void handleCodeGenerateHandler() throws AptException {
-		Map<Class<?>, CodeGenerateAllAfterEventByType> afterEvents = new HashMap<Class<?>, CodeGenerateAllAfterEventByType>();
-
 		for (Element ele : this.rootElements) {
 			if ((ele.getKind() != ElementKind.CLASS) && (ele.getKind() != ElementKind.INTERFACE))
 				continue;
@@ -184,6 +253,10 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 			if (el.getNestingKind().isNested())
 				continue;
 
+			if (ele.getEnclosingElement() != null && el.getEnclosingElement().getKind() != ElementKind.PACKAGE) {
+				continue;
+			}
+
 			List<? extends TypeParameterElement> list = el.getTypeParameters();
 			if (list != null && list.size() > 0)
 				continue;
@@ -191,36 +264,39 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 			System.out.println(el.toString());
 			for (AnnotationMirror anm : ans) {
 				Object obj = Utils.getReturnValueOnAnnotation("handlerClass", anm);
-				
 				Class<CodeGenerateHandler> cghcls = Utils.getClass(obj, CodeGenerateHandler.class);
-				if(cghcls!=null){
+				if (cghcls != null) {
 					CodeGenerateHandler cgh = null;
 					try {
-						cgh =cghcls.newInstance();
-//						if (!afterEvents.containsKey(cgh.getClass())) {
-//							CodeGenerateAllAfterEventByType cgaaebt = cgh.getStaticAfterEvent();
-//							if (cgaaebt != null) {
-//								afterEvents.put(cgh.getClass(), cgaaebt);
-//							}
-//						}
-
+						cgh = cghcls.newInstance();
 					} catch (Exception e) {
-						throw new AptException(ele, "create Object instance with " + cghcls.getName()
-								+ "error:" + e.getMessage());
+						throw new AptException(ele,
+								"create Object instance with " + cghcls.getName() + "error:" + e.getMessage());
 					}
 					cgh.setEnv(this.attributes);
 					this.changeElement(ele);
 					cgh.handle(el, anm, this.getAnnotationObj(el, anm));
+					if (cgh.isManagedByBeanFactory()) {
+						ThreadSafe ts = el.getAnnotation(ThreadSafe.class);
+						if (ts == null || ts.value()) {
+							ClassBeanDefine cbd = this.beanConfig
+									.addServiceBeanByClass(el.getQualifiedName().toString(), null);
+							Utils.buildAtuowrieProperty(cbd, el);
+
+						} else {
+							ClassBeanDefine cbd = this.beanConfig.addServiceBeanByClass(
+									"org.jfw.util.comm.ClassCreateFactory",
+									(el.getQualifiedName().toString().trim() + "@factroy").replaceAll("\\.", "_"));
+							cbd.setAttribute("clazz", el.getQualifiedName().toString(), "java.lang.Class");
+						}
+					}
+
 					break;
 				}
 
 			}
 		}
 
-		for (CodeGenerateAllAfterEventByType c : afterEvents.values()) {
-			if (c != null)
-				c.execute(this);
-		}
 	}
 
 	public void saveResourceFile(String fileName, String fileContent) throws AptException {
@@ -261,7 +337,9 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 		this.setAttribute(Filer.class.getName(), this.filer);
 		try {
 			this.handle(annotations, roundEnv);
-			if(annotations.isEmpty()){
+
+			Set<? extends Element> allInputClass = roundEnv.getRootElements();
+			if (allInputClass == null || allInputClass.isEmpty()) {
 				StringBuilder sb = new StringBuilder();
 				this.beanConfig.appendTo(sb);
 				this.saveResourceFile("beanConfig.properties", sb.toString());
@@ -276,7 +354,6 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 				m = "nullException";
 			this.messager.printMessage(Kind.ERROR, m, this.currentElement);
 		}
-		
 
 		return true;
 	}
@@ -331,7 +408,8 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 	public RoundEnvironment getRoundEnv() {
 		return roundEnv;
 	}
-	public BeanConfig getBeanConfig(){
+
+	public BeanConfig getBeanConfig() {
 		return this.beanConfig;
 	}
 

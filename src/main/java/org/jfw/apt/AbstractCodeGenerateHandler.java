@@ -13,6 +13,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileObject;
 
+import org.jfw.apt.annotation.ThreadSafe;
 import org.jfw.apt.exception.AptException;
 
 public abstract class AbstractCodeGenerateHandler implements CodeGenerateHandler {
@@ -51,25 +52,6 @@ public abstract class AbstractCodeGenerateHandler implements CodeGenerateHandler
 		Set<Modifier> modifiers = ref.getModifiers();
 		return modifiers.contains(Modifier.ABSTRACT);
 	}
-//
-//	public String getSourceFileName() {
-//		String originName = this.ref.getQualifiedName().toString();
-//		String typeName = null;
-//		int index = originName.lastIndexOf(".");
-//		String packageName = "";
-//		if (index > 0) {
-//			packageName = originName.substring(0, index + 1);
-//			typeName = originName.substring(index + 1);
-//		} else {
-//			typeName = originName;
-//		}
-//		if (this.ref.getKind() == ElementKind.INTERFACE) {
-//			return packageName + "impl." + typeName + "Impl";
-//		} else {
-//			return packageName + "extend." + typeName + "Extend";
-//		}
-//
-//	}
 
 	protected void writeSouceFile() throws AptException {
 		String originName = this.ref.getQualifiedName().toString();
@@ -95,7 +77,9 @@ public abstract class AbstractCodeGenerateHandler implements CodeGenerateHandler
 		try {
 			
 			StringBuilder sb = new StringBuilder();
-			sb.append("package ").append(packageName).append(";\r\n").append("public class ").append(className);
+			sb.append("package ").append(packageName).append(";\r\n");
+			this.handleGenerateClassManagedByBeanFactory(sb);
+			sb.append("public class ").append(className);
 			if (this.ref.getKind() == ElementKind.INTERFACE) {
 				sb.append(" implements ").append(originName);
 			} else {
@@ -116,6 +100,17 @@ public abstract class AbstractCodeGenerateHandler implements CodeGenerateHandler
 					"write java sorce file(" + packageName + "." + typeName + ") error:" + e.getMessage());
 		}
 
+	}
+	
+	public void handleGenerateClassManagedByBeanFactory(StringBuilder sb){
+		if(this.isManagedByBeanFactory()){
+			ThreadSafe ts = this.ref.getAnnotation(ThreadSafe.class);
+			if(ts==null || ts.value()){
+				sb.append("@org.jfw.apt.annotation.Bean(\"").append(this.ref.getQualifiedName().toString()).append("\")\r\n");
+			}else{
+				sb.append("@org.jfw.apt.annotation.FactoryBean(\"").append(this.ref.getQualifiedName().toString()).append("\")\r\n");
+			}
+		}
 	}
 
 	protected abstract void writeContent(StringBuilder sb) throws AptException;
@@ -139,11 +134,5 @@ public abstract class AbstractCodeGenerateHandler implements CodeGenerateHandler
 		this.writeSouceFile();
 		
 	}
-
-//	@Override
-//	public CodeGenerateAllAfterEventByType getStaticAfterEvent() {
-//		return null;
-//	}
-	
-
+	public abstract boolean isGenerateClassManagedByBeanFactory();
 }

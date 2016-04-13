@@ -9,5 +9,4 @@ public class FactoryBeanDefine extends BeanDefine{
 		bad.setValue(methodName);
 		this.addAttribute(bad);
 	}
-
 }
