@@ -144,6 +144,7 @@ public class JfwProccess extends javax.annotation.processing.AbstractProcessor {
 	private void handleBuildBean(TypeElement ele) throws AptException {
 		for (Element el : ele.getEnclosedElements()) {
 			BuildBean bd = el.getAnnotation(BuildBean.class);
+			if(bd==null)continue;
 			if (el.getKind() != ElementKind.METHOD) {
 				throw new AptException(el, "@BuildBean must embellish public static method");
 			}
